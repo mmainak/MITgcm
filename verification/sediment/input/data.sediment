@@ -1,0 +1,41 @@
+&SEDIMENT_PARM01
+# Sediment package configuration
+
+# Number of sediment classes
+SEDIMENT_nClass = 2,
+
+# Number of sediment bed layers
+SEDIMENT_nLayers = 3,
+
+# Sediment properties for each class
+SEDIMENT_Rho(1:2) = 2650.0, 2650.0,          ! Densities [kg/m³]
+SEDIMENT_Diam(1:2) = 0.0001, 0.0005,         ! Diameters [m]
+SEDIMENT_ws(1:2) = 0.01, 0.05,                ! Settling velocities [m/s]
+
+# Critical stresses for erosion and deposition [N/m²]
+SEDIMENT_tauCrit_e(1:2) = 0.1, 0.2,           ! Erosion thresholds
+SEDIMENT_tauCrit_d(1:2) = 0.1, 0.2,           ! Deposition thresholds
+
+# Erosion coefficients [kg/m²/s]
+SEDIMENT_erodCoeff(1:2) = 0.0001, 0.0001,
+
+# Bed properties
+SEDIMENT_porosity(1:3) = 0.4, 0.4, 0.4,        ! Porosity for each layer
+
+# Transport modifiers
+SEDIMENT_transport_refTemp = 20.0,           ! Reference temperature [°C]
+SEDIMENT_transport_refSalt = 35.0,           ! Reference salinity [psu]
+
+# Environmental effects flags
+SEDIMENT_temp_affect_settling = .TRUE.,      ! Temperature affects settling
+SEDIMENT_salt_affect_settling = .FALSE.,     ! Salinity affects settling
+
+# Numerical parameters
+SEDIMENT_numIters = 1,                       ! Number of iterations for settling
+SEDIMENT_Conc_min = 1.E-8,                   ! Minimum concentration [kg/m³]
+
+# Morphological acceleration factor
+#ifdef ALLOW_SEDIMENT_MORPH_ACC
+SEDIMENT_morph_factor = 1.0,                 ! Morphological acceleration factor
+#endif
+&

@@ -1,0 +1,58 @@
+C---SEDIMENT MODULE BEGIN
+C
+C     data.sediment (Cycle 1)
+C
+C     Namelist for sediment tracer parameters - Minimal Settling Configuration
+C
+C     CYCLES:
+C     -------
+C     Cycle 1: Settling velocity, CFL check
+C     Cycles 2-6: Additional physics layers
+C     Cycles 7-8: NH solver coupling
+C
+C---SEDIMENT MODULE END
+
+&SEDIMENT_PARM01
+C
+C     CYCLE 1: SETTLING PARAMETERS
+C     ============================
+C
+C     Settling velocity for sediment tracer [m/s]
+C     -------------------------------------------
+C     Typical values (Stokes settling):
+C       - Fine silt (10 µm):        1e-3 m/s
+C       - Medium silt (50 µm):      1e-2 m/s
+C       - Coarse silt (100 µm):     5e-2 m/s
+C       - Sand (250 µm):            0.1 m/s
+C
+C     For this test case, use 0.01 m/s (medium silt)
+C     This ensures CFL << 0.5 with typical timesteps.
+C
+C     CFL CHECK (computed in sediment_init.F):
+C       CFLset = ws0 * dt / min(dz)
+C       For stability: CFLset < 0.5
+C       With dt=100s and dz=10m: ws0 < 0.05 m/s ✓
+C
+SEDIMENT_ws0 = 0.01,
+
+C
+C     CYCLE 2-6: PLACEHOLDER PARAMETERS
+C     ==================================
+C     (Will be populated in subsequent cycles)
+C
+C     Sediment density [kg/m³]
+C     Typical: quartz 2650 kg/m³, clay 2400 kg/m³
+C     SEDIMENT_rhoSed = 2650.,
+C
+C     Tracer index (auto-assigned by PTRACERS)
+C     SEDIMENT_tracerNum = 1,
+C
+C     Minimum concentration threshold [kg/m³]
+C     SEDIMENT_Cmin = 1.e-8,
+
+&END
+
+C---SEDIMENT MODULE END
+
+
+

@@ -1,0 +1,106 @@
+C---SEDIMENT MODULE BEGIN
+C
+C     data.sediment (Cycle 2)
+C
+C     Namelist for sediment tracer parameters - EOS Coupling Configuration
+C
+C     CYCLES:
+C     -------
+C     Cycle 1: Settling velocity, CFL check
+C     Cycle 2: EOS coupling (sediment-density feedback) ← THIS CYCLE
+C     Cycles 3-6: Additional physics layers
+C     Cycles 7-8: NH solver coupling
+C
+C---SEDIMENT MODULE END
+
+&SEDIMENT_PARM01
+C
+C     CYCLE 1: SETTLING PARAMETERS
+C     ============================
+C
+C     Settling velocity for sediment tracer [m/s]
+C     -------------------------------------------
+C     Typical values (Stokes settling):
+C       - Fine silt (10 µm):        1e-3 m/s
+C       - Medium silt (50 µm):      1e-2 m/s
+C       - Coarse silt (100 µm):     5e-2 m/s
+C       - Sand (250 µm):            0.1 m/s
+C
+C     For this test case, use 0.01 m/s (medium silt)
+C     This ensures CFL << 0.5 with typical timesteps.
+C
+C     CFL CHECK (computed in sediment_init.F):
+C       CFLset = ws0 * dt / min(dz)
+C       For stability: CFLset < 0.5
+C       With dt=100s and dz=10m: ws0 < 0.05 m/s ✓
+C
+SEDIMENT_ws0 = 0.01,
+
+C
+C     CYCLE 2: EOS COUPLING PARAMETERS ← NEW
+C     ======================================
+C
+C     Sediment density expansion coefficient [m³/kg]
+C     ----------------------------------------------
+C     Controls how sediment concentration affects water density.
+C
+C     Physics:
+C       ρ = ρ₀[1 + γC·C]  (where C is sediment concentration [kg/m³])
+C       b = -g·γC·C       (sediment buoyancy contribution)
+C
+C     Derivation:
+C       γC ≈ (ρ_sed - ρ_water) / (ρ_water · C_typical)
+C
+C     For quartz sediment in seawater:
+C       ρ_sed   = 2650 kg/m³  (quartz grain density)
+C       ρ_water = 1025 kg/m³  (seawater reference density)
+C       Δρ/ρ₀   = (2650 - 1025)/1025 = 1.585
+C
+C     If C is in kg/m³ (volume concentration), then:
+C       γC ≈ 1.585e-3 m³/kg  (for dilute suspensions)
+C
+C     Typical range: 1e-4 to 1e-2 m³/kg
+C
+C     For this test case: use 1.6e-3 m³/kg (quartz sediment)
+C
+SEDIMENT_gammaC = 1.6E-3,
+
+C
+C     Reference sediment grain density [kg/m³]
+C     ----------------------------------------
+C     Used for diagnostics and documentation.
+C     Typical values:
+C       - Quartz:       2650 kg/m³
+C       - Clay minerals: 2400 kg/m³
+C       - Organic matter: 1200-1500 kg/m³
+C
+C     This parameter is optional; gammaC is the primary input.
+C     If provided, it's used to validate gammaC consistency.
+C
+SEDIMENT_rhoSed = 2650.,
+
+C
+C     CYCLE 3-6: PLACEHOLDER PARAMETERS
+C     ==================================
+C     (Will be populated in subsequent cycles)
+C
+C     Tracer index (auto-assigned by PTRACERS)
+C     SEDIMENT_tracerNum = 1,
+C
+C     Minimum concentration threshold [kg/m³]
+C     SEDIMENT_Cmin = 1.e-8,
+C
+C     Anisotropic diffusivity (Cycle 3)
+C     SEDIMENT_diffKzC = 1.e-5,   ! vertical diffusivity [m²/s]
+C     SEDIMENT_diffKhC = 1.e-1,   ! horizontal diffusivity [m²/s]
+C
+C     Deposition parameters (Cycle 4)
+C     SEDIMENT_depositionFlux = 0.,  ! [kg/m²/s]
+C
+
+&END
+
+C---SEDIMENT MODULE END
+
+
+

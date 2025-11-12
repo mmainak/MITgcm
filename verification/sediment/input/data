@@ -1,0 +1,121 @@
+&PARM01
+# Viscosity coefficients [m^2/s]
+viscAh = 1.E-4,
+viscAz = 1.E-4,
+viscA4 = 0.,
+
+# Diffusivity coefficients for tracers [m^2/s]
+diffKhT = 1.E-4,
+diffKzT = 1.E-4,
+diffKhS = 1.E-4,
+diffKzS = 1.E-4,
+
+# Reference values
+tRef = 20.,         ! Reference temperature [°C]
+sRef = 35.,         ! Reference salinity [psu]
+rhonil = 1035.,     ! Reference density of seawater [kg/m³]
+rhoConstFresh = 1000., ! Reference density of fresh water [kg/m³]
+
+# Equation of State
+eosType = 'JMD95Z', ! Equation of State type
+
+# Implicit treatment flags
+implicitDiffusion = .TRUE.,
+implicitViscosity = .TRUE.,
+implicitFreeSurface = .TRUE.,
+
+# Advection schemes
+tempAdvScheme = 33,  ! Temperature advection scheme
+saltAdvScheme = 33,  ! Salinity advection scheme
+tempVertAdvScheme = 3, ! Vertical temperature advection scheme
+saltVertAdvScheme = 3, ! Vertical salinity advection scheme
+
+# Other physical parameters
+gravity = 9.81,      ! Acceleration due to gravity [m/s²]
+gBaro = 9.81,        ! Barotropic gravity [m/s²]
+rigidLid = .FALSE.,  ! Rigid lid assumption
+no_slip_bottom = .TRUE., ! No-slip bottom boundary condition
+bottomDragQuadratic = 2.E-3, ! Bottom drag coefficient [kg/m²/s]
+
+# Precision for binary I/O
+readBinaryPrec = 32,
+writeBinaryPrec = 32,
+
+# I/O settings
+useSingleCpuIO = .TRUE.,
+&END
+
+&PARM02
+# Elliptic solver parameters
+cg2dMaxIters = 1000,           ! Maximum iterations for 2D conjugate gradient solver
+cg2dTargetResidual = 1.E-7,     ! Target residual for solver convergence
+&END
+
+&PARM03
+# Time stepping parameters
+nIter0 = 0,           ! Starting iteration number
+nTimeSteps = 8640,    ! Total number of time steps
+deltaT = 100.,        ! Time step size [s]
+abEps = 0.1,          ! Adams-Bashforth relaxation factor
+
+# Frequency of outputs [s]
+pChkptFreq = 86400.,  ! Checkpoint frequency
+chkptFreq = 86400.,    ! Checkpoint frequency
+dumpFreq = 3600.,      ! Dump frequency
+monitorFreq = 3600.,   ! Monitor frequency
+
+# Time stepping scheme flags
+pickupStrictlyMatch = .FALSE.,
+&END
+
+&PARM04
+# Grid parameters
+
+# Grid type flags
+usingCartesianGrid = .TRUE.,
+usingSphericalPolarGrid = .FALSE.,
+
+# Horizontal grid spacing [m]
+delX = 100*100.,     ! 100 km in X-direction
+delY = 100*100.,     ! 100 km in Y-direction
+
+# Vertical grid spacing [m]
+delZ = 20*10.,       ! 20 layers, each 10 m thick
+
+# Domain origin [m]
+xgOrigin = 0.,
+ygOrigin = 0.,
+
+# Bottom topography file
+bathyFile = 'bathy.bin',
+
+# Domain size flags
+useCubedSphereExchange = .FALSE.,
+&END
+
+&PARM05
+# Input datasets
+
+# Initial condition files
+hydrogThetaFile = 'theta.init',
+hydrogSaltFile = 'salt.init',
+
+# Forcing fields (empty for this test case)
+zonalWindFile = '',
+meridWindFile = '',
+thetaClimFile = '',
+saltClimFile = '',
+surfQnetFile = '',
+EmPmRFile = '',
+
+# Open boundary conditions
+OB_Jnorth = 100*-1,
+OB_Jsouth = 100*1,
+OB_Ieast = 100*-1,
+OB_Iwest = 100*1,
+
+# Local I/O directory
+mdsioLocalDir = ' ',
+&END
+
+# Add any additional namelists or parameters below as needed

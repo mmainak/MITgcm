@@ -1,0 +1,50 @@
+# MITgcm verification test case - build artifacts
+*.o
+*.a
+*.so
+*.mod
+*.f90
+*.F90
+
+# Build directories
+build/
+run/
+
+# Output files
+*.data
+*.meta
+STDOUT.*
+STDERR.*
+*.log
+
+# Test report files (standard MITgcm ignores)
+tr_*
+rs_*
+tst_*
+tmp_*
+
+# Temporary files
+*.bak
+*.orig
+*.rej
+*~
+.#*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python cache (if any scripts)
+__pycache__/
+*.pyc
+*.pyo
+
+# MATLAB compiled files
+*.asv
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+

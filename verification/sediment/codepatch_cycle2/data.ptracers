@@ -1,0 +1,247 @@
+# ====================
+# | PTRACERS parameters
+# ====================
+#
+# PTRACERS Package Configuration for Sediment Module
+#
+# PURPOSE:
+# --------
+# Configure the passive tracer package to support the sediment module.
+# This file defines tracer properties, initial conditions, and I/O settings.
+#
+# INTEGRATION WITH SEDIMENT MODULE:
+# ----------------------------------
+# Tracer 1 = Sediment concentration [kg/m³]
+#   - Settling velocity: handled by sediment_settling.F
+#   - Density coupling: handled by sediment_eos.F
+#   - Advection/diffusion: handled by PTRACERS package
+#
+# AUTHOR: MITgcm Sediment Module - Cycle 2
+# DATE: November 2025
+#
+# ====================
+
+ &PTRACERS_PARM01
+#
+# ===================================================================
+# BASIC TRACER SETUP
+# ===================================================================
+#
+# Number of passive tracers
+# For sediment module: minimum 1 tracer
+# Can be extended to multiple sediment classes in future cycles
+#
+  PTRACERS_numInUse = 1,
+
+#
+# ===================================================================
+# TRACER 1: SEDIMENT CONCENTRATION
+# ===================================================================
+#
+# Tracer name (for diagnostics and output)
+#
+  PTRACERS_names(1) = 'SEDIMENT',
+
+#
+# Long descriptive name for netCDF output
+#
+  PTRACERS_long_names(1) = 'Suspended Sediment Concentration',
+
+#
+# Units for tracer (kg/m³ = volume concentration)
+#
+  PTRACERS_units(1) = 'kg/m3',
+
+#
+# ===================================================================
+# INITIAL CONDITIONS
+# ===================================================================
+#
+# Initial concentration field
+# Options:
+#   1. From binary file (recommended):
+#      PTRACERS_initialFile(1) = 'sediment_init',
+#
+#   2. Uniform value:
+#      PTRACERS_ref(1) = 0.1,
+#
+#   3. From pickup file (for restarts):
+#      (leave blank, automatically detected)
+#
+# For Cycle 2, use generated initial conditions:
+#
+  PTRACERS_initialFile(1) = 'sediment_init',
+
+#
+# Reference value (used if initialFile not found or for perturbations)
+# Set to 0 for sediment (no background concentration)
+#
+  PTRACERS_ref(1) = 0.0,
+
+#
+# ===================================================================
+# ADVECTION SCHEME
+# ===================================================================
+#
+# Tracer advection scheme (number codes)
+# Recommended for sediment:
+#   2  = Centered 2nd order (smooth, may oscillate)
+#   3  = 3rd order upwind (less diffusive)
+#   7  = 7th order one-step (high accuracy)
+#   30 = 3rd order DST (flux-limited, conservative)
+#   33 = 3rd order DST with flux limiting (best for tracers)
+#   77 = Multi-dimensional 7th order (expensive but accurate)
+#
+# For sediment with settling: use 33 (flux-limited 3rd order)
+# This prevents negative concentrations and spurious oscillations
+#
+  PTRACERS_advScheme(1) = 33,
+
+#
+# ===================================================================
+# DIFFUSION
+# ===================================================================
+#
+# Horizontal diffusivity [m²/s]
+# Typical range: 1e-2 to 1e2 m²/s
+#   - Laminar: 1e-6 m²/s
+#   - Molecular: 1e-9 m²/s  
+#   - Turbulent (coastal): 0.1 to 10 m²/s
+#   - Large eddy: 10 to 100 m²/s
+#
+# For this test: moderate turbulent diffusion
+#
+  PTRACERS_diffKh(1) = 0.1,
+
+#
+# Vertical diffusivity [m²/s]
+# Typically much smaller than horizontal
+# Typical range: 1e-5 to 1e-3 m²/s
+#   - Molecular: 1e-9 m²/s
+#   - Weak stratification: 1e-5 m²/s
+#   - Strong mixing: 1e-3 m²/s
+#
+# For this test: weak vertical mixing (stratified)
+#
+  PTRACERS_diffKr(1) = 1.0E-5,
+
+#
+# Implicit vertical diffusion flag
+# TRUE = implicit (more stable for large Kz)
+# FALSE = explicit
+#
+  PTRACERS_ImplVertAdv(1) = .TRUE.,
+
+#
+# ===================================================================
+# BOUNDARY CONDITIONS
+# ===================================================================
+#
+# Bottom boundary condition type:
+#   0 = No flux (default, appropriate for sediment deposition)
+#   1 = Fixed value
+#   2 = Fixed flux
+#
+# For sediment: no-flux at bottom (deposition handled separately in Cycle 4)
+#
+  PTRACERS_bbFile(1) = ' ',
+
+#
+# Surface boundary condition:
+# No sediment flux through surface (closed domain)
+#
+  PTRACERS_sbFile(1) = ' ',
+
+#
+# ===================================================================
+# DIAGNOSTICS AND OUTPUT
+# ===================================================================
+#
+# Monitor tracer in STDOUT
+#
+  PTRACERS_monitor_freq = 3600.,
+
+#
+# Tracer snapshot output frequency [s]
+# 3600 = hourly output
+# 86400 = daily output
+#
+  PTRACERS_dumpFreq = 3600.,
+
+#
+# Use mdsio for output (binary .data/.meta files)
+#
+  PTRACERS_write_mdsio = .TRUE.,
+
+#
+# Use netCDF for output (optional, requires compilation with netCDF)
+#
+  PTRACERS_write_mnc = .FALSE.,
+
+#
+# ===================================================================
+# FORCING (None for passive sediment)
+# ===================================================================
+#
+# Sediment has no external forcing at boundaries or interior
+# (Settling is handled internally by sediment module)
+#
+  PTRACERS_forcing_In_AB = .FALSE.,
+
+#
+# ===================================================================
+# MULTI-DIMENSIONAL ADVECTION (if using scheme 77)
+# ===================================================================
+#
+# Enable multi-dimensional flux limiters
+# Only relevant for advScheme = 77
+#
+# PTRACERS_MultiDimAdv = .TRUE.,
+
+#
+# ===================================================================
+# ADDITIONAL OPTIONS (Advanced)
+# ===================================================================
+#
+# Start time for tracer integration [s]
+# (usually 0, matching main model start)
+#
+  PTRACERS_startTime = 0.,
+
+#
+# Time-stepping method
+# FALSE = forward Euler (default)
+# TRUE = Adams-Bashforth (more accurate)
+#
+  PTRACERS_AdamsBashforth_Tr = .TRUE.,
+
+#
+# Use staggered time-stepping for tracers
+#
+  PTRACERS_StaggerTimeStep = .FALSE.,
+
+#
+# ===================================================================
+# CYCLE 2 NOTES: EOS COUPLING
+# ===================================================================
+#
+# With ALLOW_SEDIMENT_EOS enabled, the sediment tracer affects
+# density through the equation of state.
+#
+# Integration points:
+#   1. PTRACERS advects and diffuses the tracer normally
+#   2. sediment_settling.F adds vertical settling flux
+#   3. sediment_eos.F computes density/buoyancy contribution
+#   4. Momentum equations respond to modified buoyancy
+#
+# No changes needed to this namelist for EOS coupling;
+# all handled internally by sediment module.
+#
+# ===================================================================
+
+ &
+
+# ====================
+# End of data.ptracers
+# ====================
+

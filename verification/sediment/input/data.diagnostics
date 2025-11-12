@@ -1,0 +1,23 @@
+&DIAGNOSTICS_LIST
+  frequency(1) = 3600.,    ! Diagnostic output every 3600 seconds
+    fields(1,1) = 'THETA   ', ! Potential Temperature
+    fields(2,1) = 'SALT    ', ! Salinity
+    fields(3,1) = 'UVEL    ', ! Zonal velocity
+    fields(4,1) = 'VVEL    ', ! Meridional velocity
+    fields(5,1) = 'WVEL    ', ! Vertical velocity
+    filename(1) = 'dynDiag',
+
+  frequency(2) = 3600.,    ! Sediment diagnostics output every 3600 seconds
+    fields(1,2) = 'SedC01  ',  ! Concentration class 1
+    fields(2,2) = 'SedC02  ',  ! Concentration class 2
+    fields(3,2) = 'SedThck ',  ! Bed thickness
+    fields(4,2) = 'SedE01  ',  ! Erosion rate class 1
+    fields(5,2) = 'SedE02  ',  ! Erosion rate class 2
+    fields(6,2) = 'SedD01  ',  ! Deposition rate class 1
+    fields(7,2) = 'SedD02  ',  ! Deposition rate class 2
+    filename(2) = 'sedDiag',
+&END
+
+&DIAG_STATIS_PARMS
+# Add any statistical diagnostics parameters here if needed
+&END

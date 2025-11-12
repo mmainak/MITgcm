@@ -1,0 +1,67 @@
+CYCLE 0: INFRASTRUCTURE TEST - FILELIST
+========================================
+
+Location: /Users/pinta/Documents/Work/Code_bases/MITgcm/verification/sediment/cycle0_complete/
+
+Files to copy to $MITGCM_ROOT/verification/sediment/code/:
+
+1. SIZE.h
+   - 40x40 global domain, 10 vertical levels
+   - MPI decomposition: 2x2 (4 processors)
+   - Local tile per processor: 20x20 + 4-cell halos
+
+2. PTRACERS_SIZE.h (CRITICAL - defines array allocation)
+   - Sets PTRACERS_num = 1 (one sediment tracer)
+   - Must be present for PTRACERS package
+   - Guarded by #ifdef ALLOW_PTRACERS
+
+3. CPP_OPTIONS.h
+   - Compilation flags for gfd, diagnostics, obcs, ptracers
+   - No sediment options defined yet
+   - Free surface, non-hydrostatic disabled
+
+4. OBCS_OPTIONS.h
+   - Open boundary conditions disabled (#undef ALLOW_OBCS)
+   - Closed domain for Cycle 0
+
+5. PTRACERS_OPTIONS.h
+   - Passive tracers enabled (configured at runtime)
+   - No special compile-time options
+
+6. packages.conf
+   - gfd (basic dynamics)
+   - diagnostics (output diagnostics)
+   - obcs (open boundary package, disabled)
+   - ptracers (passive tracers)
+
+6. README_CYCLE0.md
+   - Deployment instructions
+   - Validation checklist
+   - Expected outcomes
+
+DEPLOYMENT COMMAND:
+-------------------
+cp cycle0_complete/* $MITGCM_ROOT/verification/sediment/code/
+
+COMPILE COMMAND:
+----------------
+cd $MITGCM_ROOT/verification/sediment/build
+../code_dir/genmake2 -mods ../code -of optfile -mpi
+make depend
+make -j 8
+
+RUN COMMAND:
+------------
+cd ../run
+mpirun -np 4 ../build/mitgcmuv
+
+EXPECTED RESULT:
+----------------
+- Build succeeds (no errors)
+- 4 MPI ranks complete
+- Output files generated
+- No physics changes from baseline
+- Null sediment effect confirmed
+
+STATUS: Ready for HPC deployment
+
