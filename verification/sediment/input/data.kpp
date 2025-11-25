@@ -1,0 +1,36 @@
+# ====================
+# | KPP parameters |
+# ====================
+# KPP - K-Profile Parameterization for vertical mixing
+#
+ &KPP_PARM01
+#
+# KPP state output
+  KPPwriteState = .TRUE.,
+#
+# Mixed layer parameters
+  minKPPhbl = 10.,
+  epsilon = 0.1,
+  vonk = 0.4,
+  dB_dz = 5.E-5,
+#
+# Richardson number and shear instability parameters
+  Riinfty = 0.7,
+  difm0 = 5.E-3,
+  difs0 = 5.E-3,
+  dift0 = 5.E-3,
+  difmcon = 0.1,
+  difscon = 0.1,
+  diftcon = 0.1,
+#
+# Boundary layer depth parameters
+  Ricr = 0.3,
+  cekman = 0.7,
+  cmonob = 1.0,
+  concv = 1.8,
+  hbf = 1.0,
+#
+# Double diffusion (disabled by default)
+  KPPuseDoubleDiff = .FALSE.,
+#
+ &

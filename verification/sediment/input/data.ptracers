@@ -1,0 +1,25 @@
+# ====================
+# | PTRACERS parameters |
+# ====================
+ &PTRACERS_PARM01
+#
+  PTRACERS_numInUse = 1,
+  PTRACERS_Iter0 = 0,
+  PTRACERS_dumpFreq = 3600.,
+  PTRACERS_monitorFreq = 600.,
+#
+  PTRACERS_names(1) = 'sediment',
+  PTRACERS_long_names(1) = 'Sediment Concentration',
+  PTRACERS_units(1) = 'kg/m3',
+#
+  PTRACERS_advScheme(1) = 33,
+  PTRACERS_diffKh(1) = 1.E-2,
+  PTRACERS_diffKr(1) = 1.E-3,
+#
+  PTRACERS_useGMRedi(1) = .FALSE.,
+  PTRACERS_useKPP(1) = .TRUE.,
+#
+  PTRACERS_initialFile(1) = 'ptracer01.init',
+#
+ &
+

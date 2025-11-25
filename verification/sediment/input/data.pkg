@@ -1,0 +1,7 @@
+# Packages
+ &PACKAGES
+ usePTRACERS = .TRUE.,
+ useKPP = .TRUE.,
+ useDIAGNOSTICS = .TRUE.,
+ &
+
