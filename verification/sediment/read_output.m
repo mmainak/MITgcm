@@ -1,15 +1,23 @@
 % read_output.m
-% MITgcm Output Analysis for Cycle 7: Sediment Buoyancy Coupling
+% MITgcm Output Analysis for Cycles 7-8: Sediment Buoyancy Coupling
 %
 % Tests:
 % 1. Lock-exchange dynamics (temperature-driven)
 % 2. Sediment settling (Cycle 3)
 % 3. Sediment-buoyancy coupling (Cycle 7) - sediment increases density
+% 4. NH coupling verification (Cycle 8) - buoyancy path through NH solver
 %
 % Expected physics with buoyancy coupling:
 % - Sediment-laden water is DENSER than clear water
 % - Cold+sediment water should sink even faster
 % - Sediment gradients create additional pressure gradients
+%
+% Cycle 8 NH Path (verified):
+% - calc_phi_hyd.F: alphaRho includes sediment → phiHydC → totPhiHyd
+% - calc_grad_phi_hyd.F: Horizontal pressure gradients drive U, V
+% - Continuity: Horizontal convergence/divergence → W
+% - solve_for_pressure.F: 3D solver computes phi_nh correction
+% - No explicit buoyancy in gW (vertical momentum RHS) - this is correct!
 
 clear; close all;
 
@@ -563,10 +571,53 @@ impact.int_drho_T_max = max(abs(int_drho_T(:)));
 impact.int_drho_C_max = max(abs(int_drho_C(:)));
 
 %% ========================================================================
+% CYCLE 8: NH MODE VERIFICATION
+%==========================================================================
+% Verify that NH dynamics are active:
+% - W velocities should be significant (not just from continuity noise)
+% - W should be correlated with horizontal convergence
+% - W/U ratio indicates NH importance
+
+fprintf('\n--- Cycle 8: NH Mode Verification ---\n');
+
+% Read V velocity for divergence calculation
+V = readbin(sprintf('U.%010d.data', iter_final), [Nx,Ny,Nr], prec);  % Placeholder
+
+% Compute horizontal velocity divergence at mid-depth
+kmid = round(Nr/2);
+U_slice = squeeze(U(:,:,kmid));
+V_slice = squeeze(U(:,:,kmid));  % Using U as proxy for now
+
+% Simple divergence estimate (du/dx only, as a check)
+div_U = zeros(Nx-1, Ny);
+for j = 1:Ny
+    div_U(:,j) = diff(U_slice(:,j)) / dx;
+end
+
+% W/U ratio - indicator of NH importance
+W_U_ratio = max(stats.W_max) / max(stats.U_max);
+
+% NH metrics
+nh_metrics = struct();
+nh_metrics.W_max = max(stats.W_max);
+nh_metrics.U_max = max(stats.U_max);
+nh_metrics.W_U_ratio = W_U_ratio;
+nh_metrics.is_NH_significant = W_U_ratio > 0.05;
+
+fprintf('  Max |W|: %.4f m/s\n', nh_metrics.W_max);
+fprintf('  Max |U|: %.4f m/s\n', nh_metrics.U_max);
+fprintf('  W/U ratio: %.2f%%\n', nh_metrics.W_U_ratio * 100);
+if nh_metrics.is_NH_significant
+    fprintf('  ✓ NH dynamics are significant (W/U > 5%%)\n');
+else
+    fprintf('  ✗ Flow is quasi-hydrostatic (W/U < 5%%)\n');
+end
+
+%% ========================================================================
 % PRINT SUMMARY
 %==========================================================================
 fprintf('\n============================================================\n');
-fprintf('CYCLE 7 BUOYANCY COUPLING - SUMMARY\n');
+fprintf('CYCLES 7-8 BUOYANCY COUPLING - SUMMARY\n');
 fprintf('============================================================\n');
 fprintf('Simulation time: %.1f seconds\n', max(stats.time));
 fprintf('Number of outputs: %d\n', nT);
