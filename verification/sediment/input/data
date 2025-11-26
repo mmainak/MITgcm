@@ -1,63 +1,148 @@
+# ====================
+# MITgcm LES Lock-Exchange with Sediment
+# Non-Hydrostatic + 3D Smagorinsky
+# ====================
+#
+# Domain: 1km x 1km x 100m
+# Resolution: dx=dy=10m, dz=5m
+# Grid: 100 x 100 x 20
+#
  &PARM01
- viscAh = 1.E-2,
- viscAz = 1.E-3,
+#
+# === 3D Smagorinsky LES turbulence ===
+# Generates eddy viscosity: nu_SGS = (Cs*delta)^2 * |S|
+# With Cs=0.1, delta=10m, |S|~0.1/s → nu_SGS ~ 0.1 m²/s
+ useSmag3D = .TRUE.,
+ smag3D_coeff = 0.1,
+#
+# === Base viscosity (molecular + numerical stability) ===
+# Keep small but non-zero for stability at boundaries
+ viscAh = 1.E-3,
+ viscAz = 1.E-4,
  viscA4 = 0.,
- diffKhT = 1.E-2,
- diffKzT = 1.E-3,
- diffKhS = 1.E-2,
- diffKzS = 1.E-3,
- tRef = 20*20.,
+#
+# === Tracer diffusivity ===
+# Higher than viscosity for numerical stability at sharp fronts
+# With Smagorinsky, eddy diffusivity = nu_SGS / Pr_t (Pr_t ~ 1)
+ diffKhT = 1.E-3,
+ diffKzT = 1.E-4,
+ diffKhS = 1.E-3,
+ diffKzS = 1.E-4,
+#
+# === Reference state ===
+ tRef = 20*15.,
  sRef = 20*35.,
  rhonil = 1035.,
  rhoConstFresh = 1000.,
+#
+# === Equation of State ===
  eosType = 'LINEAR',
  tAlpha = 2.E-4,
  sBeta = 7.4E-4,
+#
+# === Numerical schemes ===
+# Implicit diffusion: stable for any diffusivity
+# Implicit viscosity: REQUIRED when Smagorinsky can be large
  implicitDiffusion = .TRUE.,
  implicitViscosity = .TRUE.,
  implicitFreeSurface = .TRUE.,
+#
+# === Advection schemes ===
+# Scheme 33 = 3rd-order DST (Direct Space Time) - good for LES
  tempAdvScheme = 33,
  saltAdvScheme = 33,
  staggerTimeStep = .TRUE.,
+#
+# === Physics ===
  gravity = 9.81,
  gBaro = 9.81,
  rigidLid = .FALSE.,
  no_slip_bottom = .TRUE.,
  bottomDragQuadratic = 2.E-3,
- readBinaryPrec = 64,
- writeBinaryPrec = 64,
+#
+# === Non-Hydrostatic ===
+ nonHydrostatic = .TRUE.,
+#
+# === I/O ===
  useSingleCpuIO = .TRUE.,
+#
  &
 
  &PARM02
+#
+# === 2D Elliptic Solver (free surface) ===
  cg2dMaxIters = 1000,
  cg2dTargetResidual = 1.E-7,
+#
+# === 3D Elliptic Solver (NH pressure) ===
+# Need more iterations for large 3D grid with strong forcing
+ cg3dMaxIters = 200,
+ cg3dTargetResidual = 1.E-8,
+#
  &
 
  &PARM03
+#
+# === Time stepping ===
  nIter0 = 0,
- nTimeSteps = 1000,
- deltaT = 100.,
+#
+# Stability analysis:
+#   - Lock-exchange front speed: u ~ 0.7 m/s, peak ~ 2 m/s
+#   - CFL_adv = u*dt/dx = 2*0.2/10 = 0.04 (safe)
+#   - CFL_vert = w*dt/dz = 1*0.2/5 = 0.04 (safe)
+#   - CFL_settling = 0.01*0.2/5 = 0.0004 (very safe)
+#
+ deltaT = 0.2,
+#
+# Simulation duration:
+#   - 18000 steps * 0.2s = 3600s = 1 hour
+#   - Enough time for lock-exchange to develop (~500m travel at 0.7 m/s)
+#
+ nTimeSteps = 18000,
+#
+# Adams-Bashforth stabilization
  abEps = 0.1,
- pChkptFreq = 86400.,
- chkptFreq = 86400.,
- dumpFreq = 3600.,
- monitorFreq = 600.,
+#
+# === Output frequencies ===
+# Checkpoints: every 10 minutes
+ pChkptFreq = 600.,
+ chkptFreq = 600.,
+#
+# Snapshots: every 30 seconds (enough to see dynamics)
+ dumpFreq = 30.,
+#
+# Monitor: every 10 seconds (detailed for debugging)
+ monitorFreq = 10.,
+#
  pickupStrictlyMatch = .FALSE.,
+#
  &
 
  &PARM04
+#
+# === Cartesian Grid ===
  usingCartesianGrid = .TRUE.,
  usingSphericalPolarGrid = .FALSE.,
- delX = 100*100.,
- delY = 100*100.,
- delZ = 20*10.,
+#
+# === Grid spacing ===
+# Horizontal: 100 cells × 10m = 1000m = 1km
+# Vertical: 20 cells × 5m = 100m depth
+#
+ delX = 100*10.,
+ delY = 100*10.,
+ delZ = 20*5.,
+#
+# === Domain origin ===
  xgOrigin = 0.,
  ygOrigin = 0.,
- bathyFile = 'bathy.bin',
+#
  &
 
  &PARM05
+#
+# === Initial conditions ===
  hydrogThetaFile = 'theta.init',
  hydrogSaltFile = 'salt.init',
+ bathyFile = 'bathy.bin',
+#
  &

@@ -2,17 +2,24 @@ C---SEDIMENT MODULE BEGIN
 C
 C     sediment.h
 C
-C     Header file for sediment tracer module - Cycle 2: EOS Coupling
+C     Header file for sediment tracer module - Cycle 7: Buoyancy Coupling
 C
 C     PURPOSE:
 C     --------
-C     Define sediment tracer parameters and control flags including
-C     equation of state (EOS) coupling for sediment-density feedback.
+C     Define sediment tracer parameters and control flags.
 C
-C     MODIFICATIONS FROM CYCLE 1:
-C     - Added SEDIMENT_gammaC: sediment density expansion coefficient
-C     - Added SEDIMENT_rhoSed: reference sediment grain density
-C     - Added buoyancy contribution storage
+C     CYCLE HISTORY:
+C     - Cycle 1: Basic infrastructure (parameters, initialization)
+C     - Cycle 2: Passive tracer test (advection/diffusion via PTRACERS)
+C     - Cycle 3: Gravitational settling (tendency-based)
+C     - Cycle 7: Buoyancy coupling (hydrostatic, this version)
+C     - Cycle 8: Non-hydrostatic coupling (future)
+C
+C     PARAMETERS DEFINED:
+C     - SEDIMENT_ws0: Settling velocity [m/s]
+C     - SEDIMENT_tracerNum: Which PTRACER is sediment (default 1)
+C     - SEDIMENT_gammaC: Density expansion coefficient [m³/kg]
+C     - SEDIMENT_rhoSed: Grain density [kg/m³]
 C
 C---SEDIMENT MODULE END
 
@@ -42,16 +49,23 @@ C     - Count violations for diagnostic output
       COMMON /SEDIMENT_FLAGS/ SEDIMENT_cflWarn, SEDIMENT_cflWarnCount
 
 C     ===================================================================
-C     CYCLE 2: EOS COUPLING PARAMETERS
+C     CYCLE 7: BUOYANCY COUPLING PARAMETERS
 C     ===================================================================
 
 C     Sediment density expansion coefficient [m³/kg]
 C     - Controls how sediment concentration affects density
-C     - Density: ρ = ρ0[1 + γC*C] (approximately)
-C     - Buoyancy: b = -g*γC*C (sediment contribution)
-C     - Typical value: γC = (ρ_sed - ρ_0)/ρ_0 / C_ref
-C     - For quartz in water: (2650-1000)/1000 = 1.65
-C     - If C in kg/m³, then γC ~ 1.65e-3 m³/kg
+C     - Density: ρ = ρ0 * (1 + γC*C)
+C     - Buoyancy: b_sed = -g * γC * C (negative = denser = sinks)
+C
+C     Physical derivation:
+C     - Sediment-water mixture density: ρ_mix = ρ_w + (ρ_sed - ρ_w) * φ
+C     - Where φ = volume fraction = C / ρ_sed (C in kg/m³)
+C     - So: ρ_mix = ρ_w + (ρ_sed - ρ_w) * C / ρ_sed
+C     - In code: deltaRho = rhoConst * gammaC * C
+C     - So: γC = (ρ_sed - ρ_w) / (ρ_sed * ρ_w)
+C     - For quartz: γC = (2650-1000)/(2650*1000) = 6.2e-4 m³/kg
+C
+C     Typical value: γC = 6.2E-4 m³/kg (quartz, ρ_sed = 2650 kg/m³)
       _RL SEDIMENT_gammaC
       COMMON /SEDIMENT_EOS_RL/ SEDIMENT_gammaC
 
@@ -73,22 +87,14 @@ C     - Computed at initialization
       COMMON /SEDIMENT_DIAGNOSTICS_RL/ SEDIMENT_cflSet
 
 C     ===================================================================
-C     CYCLE 2: BUOYANCY CONTRIBUTION STORAGE (Optional)
+C     CYCLE 7: BUOYANCY COUPLING CONTROL
 C     ===================================================================
-C
-C     Storage for sediment buoyancy contribution: b_sed = -g*γC*C
-C     This can be used for diagnostics or to decouple computation
-C     from main EOS routine.
-C
-C     NOTE: In Cycle 2 (standalone), this is primarily diagnostic.
-C     In Cycles 7-8 (NH coupling), this becomes critical for solver.
-C
-C     For now, we compute this on-the-fly in the EOS routine.
-C     Uncommenting below will allocate global storage:
-C
-C      _RL SEDIMENT_buoyancy(1-OLx:sNx+OLx, 1-OLy:sNy+OLy, Nr, nSx, nSy)
-C      COMMON /SEDIMENT_BUOYANCY_FIELD/ SEDIMENT_buoyancy
+
+C     Flag to enable/disable buoyancy coupling
+C     Read from data.sediment namelist
+C     .TRUE. = sediment affects density/buoyancy
+C     .FALSE. = sediment is passive (no density effect)
+      LOGICAL SEDIMENT_buoyancyOn
+      COMMON /SEDIMENT_BUOYANCY_FLAGS/ SEDIMENT_buoyancyOn
 
 #endif /* ALLOW_PTRACERS */
-
-

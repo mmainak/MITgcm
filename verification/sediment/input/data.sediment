@@ -1,21 +1,30 @@
 # ====================
-# | Sediment parameters (Cycle 3) |
+# | Sediment parameters (Cycle 7: Buoyancy Coupling) |
 # ====================
  &SEDIMENT_PARM01
 #
 # Which passive tracer is the sediment (default: 1)
   SEDIMENT_tracerNum = 1,
 #
-# CYCLE 1/3: Settling velocity [m/s]
+# CYCLE 3: Settling velocity [m/s]
 # Typical values: 1e-3 (fine), 1e-2 (medium), 5e-2 (coarse)
 # Current: 0.01 m/s = 864 m/day (medium silt)
   SEDIMENT_ws0 = 0.01,
 #
-# CYCLE 2: EOS coupling parameters (for future use)
-# Sediment density expansion coefficient [m³/kg]
-  SEDIMENT_gammaC = 1.6E-3,
+# CYCLE 7: Buoyancy coupling parameters
+#
+# Density expansion coefficient [m³/kg]
+# Controls how sediment concentration affects density:
+#   Δρ = ρ₀ * γC * C
+# For quartz (ρ_sed = 2650 kg/m³, ρ_water = 1000 kg/m³):
+#   γC = (ρ_sed - ρ_water) / (ρ_sed * ρ_water) = 6.2e-4 m³/kg
+  SEDIMENT_gammaC = 6.2E-4,
 #
 # Reference sediment grain density [kg/m³]
   SEDIMENT_rhoSed = 2650.,
+#
+# Enable buoyancy coupling (TRUE = sediment affects density)
+# Set to FALSE for passive tracer mode (no density effect)
+  SEDIMENT_buoyancyOn = .TRUE.,
 #
  &

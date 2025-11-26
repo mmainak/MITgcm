@@ -95,14 +95,14 @@ C       Surface layer (k=1): no settling from above
         RETURN
       ENDIF
 
-C     Get vertical grid spacing for this layer
-      dz = delZ(k)
+C     Get vertical grid spacing for this layer (drF from GRID.h)
+      dz = drF(k)
 
 C     Safety check
       IF ( dz .LE. 0. ) THEN
         IF ( myThid .EQ. 1 ) THEN
           WRITE(msgBuf,'(A,I3,A)') 
-     &      'ERROR: Invalid delZ at k=', k, ' in SEDIMENT_SETTLING'
+     &      'ERROR: Invalid drF at k=', k, ' in SEDIMENT_SETTLING'
           CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &                        SQUEEZE_RIGHT, myThid )
         ENDIF

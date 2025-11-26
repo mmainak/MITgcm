@@ -5,21 +5,27 @@
 #
   PTRACERS_numInUse = 1,
   PTRACERS_Iter0 = 0,
-  PTRACERS_dumpFreq = 3600.,
-  PTRACERS_monitorFreq = 600.,
+#
+# Output frequencies (match main data file)
+  PTRACERS_dumpFreq = 30.,
+  PTRACERS_monitorFreq = 10.,
 #
   PTRACERS_names(1) = 'sediment',
   PTRACERS_long_names(1) = 'Sediment Concentration',
   PTRACERS_units(1) = 'kg/m3',
 #
+# Advection scheme 33 = 3rd-order DST (same as T/S)
   PTRACERS_advScheme(1) = 33,
+#
+# Diffusivity for sediment tracer
+# Use higher diffusivity than T/S for numerical stability
+# (sharp sediment gradients at lock-exchange front)
   PTRACERS_diffKh(1) = 1.E-2,
   PTRACERS_diffKr(1) = 1.E-3,
 #
   PTRACERS_useGMRedi(1) = .FALSE.,
-  PTRACERS_useKPP(1) = .TRUE.,
+  PTRACERS_useKPP(1) = .FALSE.,
 #
   PTRACERS_initialFile(1) = 'ptracer01.init',
 #
  &
-

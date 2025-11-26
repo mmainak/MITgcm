@@ -1,24 +1,22 @@
-# Diagnostics Package Choices
-#--------------------------------------------------------------------
-# List 1: Standard dynamics - every hour
-#--------------------------------------------------------------------
+# ====================
+# Diagnostics Package Configuration
+# ====================
+# Output frequency: 60s (every minute for detailed analysis)
+#
  &DIAGNOSTICS_LIST
-  frequency(1) = 3600.,
+#--------------------------------------------------------------------
+# List 1: Standard dynamics
+#--------------------------------------------------------------------
+  frequency(1) = 60.,
     fields(1:5,1) = 'UVEL    ','VVEL    ','WVEL    ',
                     'THETA   ','SALT    ',
     filename(1) = 'dynDiag',
 #--------------------------------------------------------------------
-# List 2: Passive tracer (sediment) - every hour
+# List 2: Passive tracer (sediment)
 #--------------------------------------------------------------------
-  frequency(2) = 3600.,
+  frequency(2) = 60.,
     fields(1:1,2) = 'TRAC01  ',
     filename(2) = 'ptrDiag',
-#--------------------------------------------------------------------
-# List 3: KPP diagnostics - every hour
-#--------------------------------------------------------------------
-  frequency(3) = 3600.,
-    fields(1:2,3) = 'KPPhbl  ','KPPviscA',
-    filename(3) = 'kppDiag',
  &
 
  &DIAG_STATIS_PARMS

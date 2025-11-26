@@ -33,6 +33,7 @@ C     === Global variables ===
 #include "SIZE.h"
 #include "EEPARAMS.h"
 #include "PARAMS.h"
+#include "GRID.h"
 #include "sediment.h"
 
 C     === Routine arguments ===
@@ -66,11 +67,12 @@ C     ===================================================================
       IF ( myThid .EQ. 1 ) THEN
 
 C       Find minimum vertical grid spacing
+C       Note: drF(k) is the cell thickness at level k (from GRID.h)
         minDelZ = 1.E20
         kMin = 1
         DO k = 1, Nr
-          IF ( delZ(k) .LT. minDelZ ) THEN
-            minDelZ = delZ(k)
+          IF ( drF(k) .LT. minDelZ ) THEN
+            minDelZ = drF(k)
             kMin = k
           ENDIF
         ENDDO
@@ -147,7 +149,7 @@ C       Print diagnostics
      &    '  Time step deltaT = ', deltaT
         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &                      SQUEEZE_RIGHT, myThid )
-        WRITE(msgBuf,'(A,1PE12.4,A,I3)') 
+        WRITE(msgBuf,'(A,1PE12.4,A,I3,A)') 
      &    '  Min grid spacing = ', minDelZ, ' m (at k=', kMin, ')'
         CALL PRINT_MESSAGE( msgBuf, standardMessageUnit,
      &                      SQUEEZE_RIGHT, myThid )

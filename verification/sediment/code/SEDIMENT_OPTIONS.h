@@ -41,7 +41,7 @@ C     CFL constraint: ws0*dt/dz < 0.5
 #define ALLOW_SEDIMENT_SETTLING
 
 C     ===================================================================
-C     CYCLE 2: EOS COUPLING ← NEW IN CYCLE 2
+C     CYCLE 2: EOS COUPLING (NOT YET INTEGRATED)
 C     ===================================================================
 
 C     ALLOW_SEDIMENT_EOS
@@ -57,13 +57,14 @@ C     Implementation:
 C       - SEDIMENT_EOS_BUOYANCY: adds sediment term to buoyancy field
 C       - SEDIMENT_EOS_DENSITY: adds sediment term to density field
 C
-C     Integration points:
+C     Integration points (requires MITgcm core modifications):
 C       - compute_buoyancy.F: call SEDIMENT_EOS_BUOYANCY
 C       - eos_linear.F: call SEDIMENT_EOS_DENSITY
 C
-C     ✅ ENABLED IN CYCLE 2
+C     ❌ DISABLED - Code exists but not hooked into MITgcm EOS system
+C     Will be enabled in a future cycle when we modify compute_buoyancy.F
 
-#define ALLOW_SEDIMENT_EOS
+#undef ALLOW_SEDIMENT_EOS
 
 C     ===================================================================
 C     CYCLE 3: ANISOTROPIC DIFFUSIVITY (Later)
@@ -127,17 +128,21 @@ C     CYCLE 7-8: SOLVER INTEGRATION (Later)
 C     ===================================================================
 
 C     ALLOW_SEDIMENT_BUOYANCY
-C     ======================
-C     Enable sediment buoyancy coupling to momentum equations.
-C     Adds -g*gammaC*C term to buoyancy field b.
-C     Modifies: compute_buoyancy.F, mom_calc_rhs.F, nh_tend.F
+C     =======================
+C     Enable sediment buoyancy coupling to hydrostatic pressure.
+C     Adds sediment density contribution: Δρ = ρ₀ * γC * C
+C     Modifies: calc_phi_hyd.F (local copy with sediment hook)
 C
-C     NOTE: This is different from ALLOW_SEDIMENT_EOS!
-C     - ALLOW_SEDIMENT_EOS: Adds sediment to density/buoyancy (Cycle 2)
-C     - ALLOW_SEDIMENT_BUOYANCY: Couples to NH momentum solver (Cycle 7-8)
+C     Physics:
+C       ρ_mix = ρ_water * (1 + γC * C)
+C       where γC ≈ 1.6e-3 m³/kg for quartz sediment
 C
-C     Currently disabled; will be enabled in Cycle 7
-C     #undef ALLOW_SEDIMENT_BUOYANCY
+C     This affects:
+C       - Hydrostatic pressure gradient
+C       - Baroclinic flow driven by sediment concentration gradients
+C
+C     ENABLED for Cycle 7 (Hydrostatic buoyancy coupling)
+#define ALLOW_SEDIMENT_BUOYANCY
 
 #endif /* SEDIMENT_OPTIONS_H */
 
