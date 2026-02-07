@@ -1,0 +1,44 @@
+# ====================
+# | PTRACERS - Sediment Tracer Configuration |
+# ====================
+#
+# Tracer 1: Sediment concentration [kg/m^3]
+#
+# PHYSICS:
+# - Sediment enters via OBCS at conduit (C = 1 kg/m^3)
+# - Advected by plume flow (rises along ice face)
+# - Settles due to gravity (handled by SEDIMENT package)
+# - Affects density via buoyancy coupling
+#
+ &PTRACERS_PARM01
+#
+# Number of tracers
+ PTRACERS_numInUse = 1,
+ PTRACERS_Iter0 = 0,
+#
+# --- Tracer 1: Sediment ---
+ PTRACERS_names(1) = 'sediment',
+ PTRACERS_long_names(1) = 'Sediment Concentration',
+ PTRACERS_units(1) = 'kg/m^3',
+#
+# Advection scheme: 7 = 3rd order with flux limiter (more stable than 33)
+# Scheme 33 (DST) causes checkerboard oscillations with sharp gradients
+# Scheme 7 (superbee limiter) prevents over/undershoots
+ PTRACERS_advScheme(1) = 7,
+#
+# Diffusivity (increased to spread sediment faster toward boundaries)
+ PTRACERS_diffKh(1) = 1.0,
+ PTRACERS_diffKr(1) = 1.E-3,
+#
+# No GM/Redi, no KPP (handled explicitly)
+ PTRACERS_useGMRedi(1) = .FALSE.,
+ PTRACERS_useKPP(1) = .FALSE.,
+#
+# Initial condition file
+ PTRACERS_initialFile(1) = 'sediment_init.bin',
+#
+# NOTE: OBCS for tracers is handled automatically by the OBCS package
+# when OBWptrFile/OBEptrFile are specified in data.obcs
+# No explicit PTRACERS_useOBCS flag exists in standard MITgcm.
+#
+ &

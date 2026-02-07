@@ -27,6 +27,9 @@ C !USES: ===============================================================
 #include "PTRACERS_SIZE.h"
 #include "PTRACERS_PARAMS.h"
 #include "PTRACERS_FIELDS.h"
+#ifdef ALLOW_SEDIMENT
+#include "sediment.h"
+#endif
 
 C !INPUT PARAMETERS: ===================================================
 C  gPtracer             :: the tendency array
@@ -56,6 +59,14 @@ C  i,j            :: loop indices
       INTEGER i,j
 C     number of surface interface layer
       INTEGER kSurface
+#ifdef ALLOW_SEDIMENT
+#ifdef ALLOW_SEDIMENT_SHELFICE
+#ifdef ALLOW_SEDIMENT_SUBGLACIAL_DISCHARGE
+C     Subglacial discharge sediment tendency
+      _RL sgdTend(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+#endif
+#endif
+#endif
 CEOP
 
       IF ( fluidIsAir ) THEN
@@ -140,6 +151,28 @@ C           and checks internally if this is the correct tracer
      I                 iTracer,
      I                 myTime, myIter, myThid )
 #endif /* ALLOW_SEDIMENT_SETTLING */
+
+C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
+C     SEDIMENT MODULE: Add subglacial discharge sediment source
+C---+----1----+----2----+----3----+----4----+----5----+----6----+----7-|--+----|
+#ifdef ALLOW_SEDIMENT_SHELFICE
+#ifdef ALLOW_SEDIMENT_SUBGLACIAL_DISCHARGE
+C     Only apply to sediment tracer
+      IF ( iTracer .EQ. SEDIMENT_tracerNum ) THEN
+C       Compute SGD sediment source at this level
+        CALL SEDIMENT_SHELFICE_SGD_FORCING(
+     I                   bi, bj, k,
+     O                   sgdTend,
+     I                   myTime, myIter, myThid )
+C       Add to tendency
+        DO j = jMin, jMax
+          DO i = iMin, iMax
+            gPtracer(i,j) = gPtracer(i,j) + sgdTend(i,j)
+          ENDDO
+        ENDDO
+      ENDIF
+#endif /* ALLOW_SEDIMENT_SUBGLACIAL_DISCHARGE */
+#endif /* ALLOW_SEDIMENT_SHELFICE */
 #endif /* ALLOW_SEDIMENT */
 
 #endif /* ALLOW_PTRACERS */

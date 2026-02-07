@@ -1,0 +1,50 @@
+# ====================
+# | DIAGNOSTICS - Output Configuration |
+# ====================
+#
+ &DIAGNOSTICS_LIST
+#
+# === 3D FIELDS (every 30s) ===
+# Flow, tracers, and derived quantities
+ fields(1:8,1) = 'UVEL    ', 'VVEL    ', 'WVEL    ',
+                 'THETA   ', 'SALT    ', 'RHOAnoma',
+                 'TRAC01  ', 'PHIHYD  ',
+ fileName(1) = 'diag3D',
+ frequency(1) = 30.,
+ timePhase(1) = 0.,
+#
+# === 2D FIELDS (every 30s) ===
+# Surface and ice-ocean interface
+ fields(1:4,2) = 'ETAN    ', 'SHIfwFlx', 'SHIhtFlx', 'SHI_mass',
+ fileName(2) = 'diag2D',
+ frequency(2) = 30.,
+ timePhase(2) = 0.,
+#
+# === SNAPSHOTS (every 5s for movies) ===
+# High-frequency output for animation
+ fields(1:5,3) = 'UVEL    ', 'WVEL    ', 'THETA   ', 
+                 'SALT    ', 'TRAC01  ',
+ fileName(3) = 'snap',
+ frequency(3) = -5.,
+ timePhase(3) = 0.,
+#
+# === VERTICAL SECTIONS (every 10s) ===
+# Center y-slice for plume visualization
+ fields(1:4,4) = 'UVEL    ', 'WVEL    ', 'THETA   ', 'TRAC01  ',
+ fileName(4) = 'section',
+ frequency(4) = -10.,
+ timePhase(4) = 0.,
+#
+ &
+
+ &DIAG_STATIS_PARMS
+#
+# Statistics output
+ stat_fields(1:7,1) = 'UVEL    ', 'VVEL    ', 'WVEL    ',
+                      'THETA   ', 'SALT    ', 'TRAC01  ',
+                      'RHOAnoma',
+ stat_fname(1) = 'statDiag',
+ stat_freq(1) = 5.,
+ stat_phase(1) = 0.,
+#
+ &

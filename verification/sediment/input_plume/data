@@ -1,0 +1,142 @@
+# ====================
+# | Subglacial Plume Simulation - Main Parameters |
+# ====================
+#
+# PARALLEL: 4 processors (nPx=2, nPy=2), sNx=20, sNy=4
+# DOMAIN: Nx=40, Ny=8, Nr=40 (telescoping in x)
+# RESOLUTION: dx=5-20m (telescoping), dy=5m, dz=5m
+# PHYSICS: Non-hydrostatic, buoyant plume
+#
+# STABILITY ANALYSIS:
+# - Expected max velocity: U ~ 1 m/s (buoyant plume)
+# - Minimum dx = 5m, dt = 0.25s
+# - CFL = U*dt/dx = 1*0.25/5 = 0.05 (safe)
+# - Diffusive CFL = nu*dt/dx^2 = 0.1*0.25/25 = 0.001 (safe)
+#
+ &PARM01
+#
+# ========== VISCOSITY ==========
+# Horizontal: Smagorinsky-like scaling, nu_h ~ 0.1*dx = 0.5 m^2/s
+# But for stability with explicit scheme, use smaller value
+ viscAh = 0.1,
+ viscA4 = 0.,
+# Vertical: molecular + small turbulent
+ viscAz = 1.E-4,
+# Background viscosity (numerical stability)
+ viscC2Leith = 0.,
+ viscC2LeithD = 0.,
+#
+# ========== DIFFUSIVITY ==========
+# Prandtl number Pr = nu/kappa ~ 1-10 for turbulent flows
+# Use Pr ~ 1 for simplicity
+ diffKhT = 0.1,
+ diffKhS = 0.1,
+# Vertical: enhanced near-field mixing
+ diffKzT = 1.E-4,
+ diffKzS = 1.E-4,
+#
+# ========== EQUATION OF STATE ==========
+# Linear EOS for speed and clarity
+# rho = rho0 * [1 - alpha*(T-T0) + beta*(S-S0)]
+ eosType = 'LINEAR',
+ tAlpha = 3.9E-5,
+ sBeta = 7.4E-4,
+#
+# ========== REFERENCE STATE ==========
+# Ambient fjord: T=2C, S=34.5 psu
+ tRef = 40*2.0,
+ sRef = 40*34.5,
+ rhoConst = 1028.,
+ rhoNil = 1028.,
+#
+# ========== CORIOLIS ==========
+# f ~ -1.4e-4 (Southern Hemisphere, ~70S)
+# Rossby number Ro = U/(f*L) = 1/(1.4e-4*100) ~ 70 >> 1
+# Flow is NOT rotationally dominated at this scale
+ f0 = -1.4E-4,
+ beta = 0.,
+#
+# ========== GRAVITY ==========
+ gravity = 9.81,
+#
+# ========== FREE SURFACE ==========
+ rigidLid = .FALSE.,
+ implicitFreeSurface = .TRUE.,
+#
+# ========== NON-HYDROSTATIC ==========
+# Essential for resolving vertical convection in plume
+ nonHydrostatic = .TRUE.,
+#
+# ========== NUMERICS ==========
+ implicitDiffusion = .TRUE.,
+ implicitViscosity = .TRUE.,
+ staggerTimeStep = .TRUE.,
+# High-order advection (flux-limited, reduces oscillations)
+ tempAdvScheme = 33,
+ saltAdvScheme = 33,
+#
+# ========== BOUNDARY CONDITIONS ==========
+# Free-slip sides (north/south walls)
+ no_slip_sides = .FALSE.,
+# No-slip bottom
+ no_slip_bottom = .TRUE.,
+ bottomDragQuadratic = 2.5E-3,
+#
+# ========== PRESSURE SOLVER ==========
+ implicitIntGravWave = .TRUE.,
+#
+# ========== I/O ==========
+ readBinaryPrec = 64,
+ writeBinaryPrec = 64,
+ useSingleCpuIO = .TRUE.,
+ debugLevel = 2,
+ &
+
+ &PARM02
+# Conjugate gradient solver settings
+# 2D solver (free surface)
+ cg2dMaxIters = 1000,
+ cg2dTargetResidual = 1.E-13,
+# 3D solver (non-hydrostatic pressure)
+ cg3dMaxIters = 200,
+ cg3dTargetResidual = 1.E-9,
+ &
+
+ &PARM03
+# ========== TIME STEPPING ==========
+ nIter0 = 0,
+# Run for 1 hour = 3600s
+ nTimeSteps = 14400,
+# dt = 0.25s (conservative for stability)
+ deltaT = 0.25,
+# Adams-Bashforth parameter
+ abEps = 0.1,
+#
+# ========== OUTPUT FREQUENCY ==========
+# Checkpoint every 15 minutes
+ pChkptFreq = 900.,
+ chkptFreq = 900.,
+# Dump fields every 30 seconds
+ dumpFreq = 30.,
+# Monitor every 5 seconds
+ monitorFreq = 5.,
+ monitorSelect = 2,
+ &
+
+ &PARM04
+# ========== GRID ==========
+ usingCartesianGrid = .TRUE.,
+ usingSphericalPolarGrid = .FALSE.,
+# Telescoping grid read from files
+ delXFile = 'delX.bin',
+ delYFile = 'delY.bin',
+# Uniform vertical: 40 levels x 5m = 200m
+ delZ = 40*5.,
+ &
+
+ &PARM05
+# ========== INPUT FILES ==========
+ bathyFile = 'bathy.bin',
+ hydrogThetaFile = 'T_init.bin',
+ hydrogSaltFile = 'S_init.bin',
+ &

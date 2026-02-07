@@ -1,0 +1,54 @@
+# ====================
+# | SEDIMENT Package - Subglacial Plume Configuration |
+# ====================
+#
+# SEDIMENT PHYSICS:
+# - Fine glacial sediment (silt/clay): d ~ 10-50 microns
+# - Settling velocity: ws ~ 0.001 m/s (Stokes settling)
+# - Density: rho_sed = 2650 kg/m^3 (quartz)
+# - Concentration in discharge: C = 1 kg/m^3
+#
+# BUOYANCY EFFECTS:
+# - Sediment makes water denser: drho = rho0 * gamma_C * C
+# - gamma_C = (rho_sed - rho_w)/(rho_sed * rho_w) ~ 6e-4 m^3/kg
+# - At C=1 kg/m^3: drho ~ 0.6 kg/m^3 (0.06% denser)
+# - Much smaller than freshwater effect (2.5% lighter)
+#
+ &SEDIMENT_PARM01
+#
+# Which tracer is sediment
+ SEDIMENT_tracerNum = 1,
+#
+# === SETTLING ===
+# Fine glacial sediment: ws ~ 0.001 m/s
+# This is ~3.6 m/hour or 86 m/day
+ SEDIMENT_ws0 = 0.001,
+#
+# === DENSITY COUPLING ===
+# Sediment expansion coefficient [m^3/kg]
+# gamma_C = (rho_sed - rho_w)/(rho_sed * rho_w)
+# = (2650 - 1028)/(2650 * 1028) = 5.95e-4
+ SEDIMENT_gammaC = 5.95E-4,
+#
+# Grain density [kg/m^3]
+ SEDIMENT_rhoSed = 2650.,
+#
+# === COUPLING FLAGS ===
+# Enable buoyancy coupling (sediment affects pressure gradient)
+# TEMPORARILY DISABLED FOR DEBUGGING
+ SEDIMENT_buoyancyOn = .FALSE.,
+#
+# Enable density coupling (sediment affects convection/mixing)  
+# TEMPORARILY DISABLED FOR DEBUGGING
+ SEDIMENT_densityOn = .FALSE.,
+#
+# === SHELFICE COUPLING ===
+# Sediment can affect melt rates (experimental)
+ SEDIMENT_shelficeOn = .FALSE.,
+ SEDIMENT_meltFactor = 0.0,
+#
+# SGD via SEDIMENT package disabled (using OBCS instead)
+ SEDIMENT_sgdFlux = 0.,
+ SEDIMENT_sgdNpts = 0,
+#
+ &

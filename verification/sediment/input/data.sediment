@@ -1,5 +1,5 @@
 # ====================
-# | Sediment parameters (Cycle 7: Buoyancy Coupling) |
+# | Sediment parameters (Cycle 9: Two-Way Density Coupling) |
 # ====================
  &SEDIMENT_PARM01
 #
@@ -23,8 +23,60 @@
 # Reference sediment grain density [kg/m³]
   SEDIMENT_rhoSed = 2650.,
 #
-# Enable buoyancy coupling (TRUE = sediment affects density)
+# Enable buoyancy coupling (TRUE = sediment affects hydrostatic pressure)
 # Set to FALSE for passive tracer mode (no density effect)
   SEDIMENT_buoyancyOn = .TRUE.,
+#
+# CYCLE 9: Two-way density coupling
+#
+# Enable sediment in density calculations for convection and mixing
+# TRUE = convection/mixing "feel" sediment stratification (two-way)
+# FALSE = only buoyancy coupling (one-way, Cycle 7 only)
+#
+# This is critical for plume dynamics where sediment stratification
+# should stabilize or destabilize the water column!
+  SEDIMENT_densityOn = .TRUE.,
+#
+# ====================
+# CYCLE 10: SHELFICE Coupling
+# ====================
+#
+# Enable sediment-ice interaction
+  SEDIMENT_shelficeOn = .TRUE.,
+#
+# Melt enhancement factor [m³/kg]
+# γT_eff = γT * (1 + α * C_BL)
+# where α = SEDIMENT_meltFactor
+# Typical: 0.1-1.0 (0.5 = 50% increase per kg/m³ sediment)
+  SEDIMENT_meltFactor = 0.5,
+#
+# ====================
+# Subglacial Discharge Parameters
+# ====================
+#
+# Discharge flux [m³/s] (volume per unit time)
+# Typical: 1-100 m³/s per outlet
+  SEDIMENT_sgdFlux = 10.0,
+#
+# Sediment concentration in discharge [kg/m³]
+# Typical: 0.1-10 kg/m³ (highly variable)
+  SEDIMENT_sgdConc = 1.0,
+#
+# Discharge temperature [°C] (near pressure melting point)
+  SEDIMENT_sgdTemp = 0.0,
+#
+# Discharge salinity [psu] (freshwater)
+  SEDIMENT_sgdSalt = 0.0,
+#
+# Vertical extent of injection layer [m]
+  SEDIMENT_sgdDepth = 10.0,
+#
+# Number of injection points
+  SEDIMENT_sgdNpts = 1,
+#
+# Injection location indices (i,j for each point)
+# These should be at the grounding line (bottom of ice shelf)
+  SEDIMENT_sgdI(1) = 5,
+  SEDIMENT_sgdJ(1) = 50,
 #
  &

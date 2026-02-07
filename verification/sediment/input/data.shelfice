@@ -1,0 +1,87 @@
+# ====================
+# SHELFICE Package Parameters
+# ====================
+# Configuration for sediment-laden subglacial plume simulation
+#
+# This setup uses:
+# - Velocity-dependent transfer coefficients (Holland & Jenkins 1999)
+# - Boundary layer averaging
+# - Conservative thermodynamics
+#
+# Sediment coupling (via ALLOW_SEDIMENT_SHELFICE):
+# - Transfer coefficients modified by sediment concentration
+# - Subglacial discharge injects sediment at grounding line
+#
+ &SHELFICE_PARM01
+#
+# === General options ===
+#
+# Use velocity-dependent transfer coefficients (Holland & Jenkins 1999)
+ SHELFICEuseGammaFrict = .TRUE.,
+#
+# Average T,S,U,V over boundary layer for melt calculation
+ SHELFICEboundaryLayer = .TRUE.,
+#
+# Use conservative thermodynamics (Jenkins et al. 2001)
+ SHELFICEconserve = .TRUE.,
+#
+# Use advective-diffusive heat flux (more complete physics)
+ SHELFICEadvDiffHeatFlux = .TRUE.,
+#
+# === Transfer coefficients ===
+# (only used if SHELFICEuseGammaFrict = .FALSE.)
+#
+# Heat transfer coefficient [m/s]
+# SHELFICEheatTransCoeff = 1.0E-4,
+#
+# Salt/Heat ratio (dimensionless)
+# SHELFICEsaltToHeatRatio = 5.05E-3,
+#
+# === Velocity-dependent gamma parameters ===
+# (used when SHELFICEuseGammaFrict = .TRUE.)
+#
+# Quadratic drag coefficient for ustar calculation
+ shiCdrag = 2.5E-3,
+#
+# Prandtl and Schmidt numbers
+ shiPrandtl = 13.8,
+ shiSchmidt = 2432.0,
+#
+# Kinematic viscosity [m²/s]
+ shiKinVisc = 1.95E-6,
+#
+# === Ice properties ===
+#
+# Ice shelf density [kg/m³]
+ rhoShelfIce = 917.0,
+#
+# Ice thermal diffusivity [m²/s]
+ SHELFICEkappa = 1.54E-6,
+#
+# Ice heat capacity [J/kg/K]
+ SHELFICEheatCapacity_Cp = 2000.0,
+#
+# Latent heat of fusion [J/kg]
+ SHELFICElatentHeat = 334000.0,
+#
+# Ice surface temperature [°C]
+# (for diffusive heat flux into ice)
+ SHELFICEthetaSurface = -20.0,
+#
+# === Drag at ice base ===
+#
+# Quadratic drag coefficient (matches shiCdrag by default)
+ SHELFICEDragQuadratic = 2.5E-3,
+#
+# === Input files ===
+#
+# Ice shelf draft file (depth of ice base, negative values)
+# R_shelfIce will be read from this file
+ SHELFICEtopoFile = 'shelfice_topo.bin',
+#
+# === Output ===
+#
+ SHELFICEwriteState = .TRUE.,
+ SHELFICE_dumpFreq = 3600.0,
+#
+ &

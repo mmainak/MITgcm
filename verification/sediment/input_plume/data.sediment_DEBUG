@@ -1,0 +1,18 @@
+# DEBUG VERSION: Disable settling to test if it causes instability
+ &SEDIMENT_PARM01
+ SEDIMENT_tracerNum = 1,
+ 
+ # DISABLE SETTLING FOR DEBUG
+ SEDIMENT_ws0 = 0.0,
+ 
+ SEDIMENT_gammaC = 5.95E-4,
+ SEDIMENT_rhoSed = 2650.,
+ 
+ # DISABLE ALL COUPLING
+ SEDIMENT_buoyancyOn = .FALSE.,
+ SEDIMENT_densityOn = .FALSE.,
+ SEDIMENT_shelficeOn = .FALSE.,
+ SEDIMENT_meltFactor = 0.0,
+ SEDIMENT_sgdFlux = 0.,
+ SEDIMENT_sgdNpts = 0,
+ &

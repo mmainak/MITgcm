@@ -1,0 +1,28 @@
+# ====================
+# | SEDIMENT - MINIMAL TEST (Settling DISABLED) |
+# ====================
+#
+# This disables settling to test if advection/OBCS alone work correctly
+#
+ &SEDIMENT_PARM01
+#
+ SEDIMENT_tracerNum = 1,
+#
+# === SETTLING DISABLED ===
+ SEDIMENT_ws0 = 0.0,
+#
+# === DENSITY COUPLING DISABLED ===
+ SEDIMENT_gammaC = 5.95E-4,
+ SEDIMENT_rhoSed = 2650.,
+ SEDIMENT_buoyancyOn = .FALSE.,
+ SEDIMENT_densityOn = .FALSE.,
+#
+# === SHELFICE COUPLING DISABLED ===
+ SEDIMENT_shelficeOn = .FALSE.,
+ SEDIMENT_meltFactor = 0.0,
+#
+# === SGD DISABLED ===
+ SEDIMENT_sgdFlux = 0.,
+ SEDIMENT_sgdNpts = 0,
+#
+ &

@@ -1,0 +1,44 @@
+# ====================
+# | SHELFICE - GROUNDED Ice Face Configuration |
+# ====================
+#
+# Represents a GROUNDED 200m deep ice face on the west boundary.
+# Ice extends from surface to seafloor (grounding line at z=-200m).
+# Subglacial discharge emerges at the grounding line via OBCS.
+#
+# NOTE: SHELFICEisOn is NOT a namelist parameter - it's set internally
+# when useShelfIce=.TRUE. in data.pkg
+#
+ &SHELFICE_PARM01
+#
+# === THERMODYNAMICS ===
+# Based on reference experiment settings
+ SHELFICEconserve = .TRUE.,
+ SHELFICEboundaryLayer = .FALSE.,
+ SHELFICEadvDiffHeatFlux = .TRUE.,
+#
+# === TRANSFER COEFFICIENTS ===
+# Velocity-dependent (Holland & Jenkins 1999)
+ SHELFICEuseGammaFrict = .TRUE.,
+ shiCdrag = 2.5E-3,
+ SHELFICEDragQuadratic = 2.5E-3,
+ SHELFICEselectDragQuadr = 2,
+#
+# === ICE PROPERTIES ===
+ rhoShelfIce = 917.,
+ SHELFICElatentHeat = 3.34E5,
+ SHELFICEHeatCapacity_Cp = 2000.,
+ SHELFICEthetaSurface = -20.,
+#
+# === BOUNDARY CONDITION ===
+ no_slip_shelfice = .FALSE.,
+#
+# === INPUT ===
+# Ice draft (depth of ice base, negative values)
+ SHELFICEtopoFile = 'shelfice_topo.bin',
+#
+# === OUTPUT ===
+ SHELFICEwriteState = .TRUE.,
+ SHELFICE_dumpFreq = 30.,
+#
+ &

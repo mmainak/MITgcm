@@ -124,7 +124,7 @@ C     Currently disabled; will be enabled in Cycle 6
 C     #undef ALLOW_SEDIMENT_FLOCCULATION
 
 C     ===================================================================
-C     CYCLE 7-8: SOLVER INTEGRATION (Later)
+C     CYCLE 7-8: SOLVER INTEGRATION
 C     ===================================================================
 
 C     ALLOW_SEDIMENT_BUOYANCY
@@ -135,7 +135,7 @@ C     Modifies: calc_phi_hyd.F (local copy with sediment hook)
 C
 C     Physics:
 C       ρ_mix = ρ_water * (1 + γC * C)
-C       where γC ≈ 1.6e-3 m³/kg for quartz sediment
+C       where γC ≈ 6.2e-4 m³/kg for quartz sediment
 C
 C     This affects:
 C       - Hydrostatic pressure gradient
@@ -143,6 +143,79 @@ C       - Baroclinic flow driven by sediment concentration gradients
 C
 C     ENABLED for Cycle 7 (Hydrostatic buoyancy coupling)
 #define ALLOW_SEDIMENT_BUOYANCY
+
+C     ===================================================================
+C     CYCLE 9: TWO-WAY DENSITY COUPLING
+C     ===================================================================
+
+C     ALLOW_SEDIMENT_DENSITY
+C     ======================
+C     Enable sediment to affect density calculations in FIND_RHO_2D.
+C     This provides FULL TWO-WAY COUPLING:
+C       1. Sediment → buoyancy → momentum (Cycle 7, via calc_phi_hyd.F)
+C       2. Sediment → density → convection/mixing (Cycle 9, via this flag)
+C
+C     Physics:
+C       ρ_total = ρ_sw(T,S) + αc * C
+C       where αc = (ρ_sed - ρ_sw) / ρ_sed ≈ 0.62 for quartz
+C
+C     This affects:
+C       - Convective adjustment (convective_adjustment.F)
+C       - Implicit vertical diffusion (calc_ivdc.F)
+C       - Any stability/stratification calculation
+C
+C     Without this, convection is BLIND to sediment stratification!
+C     A heavy sediment layer won't trigger convection unless this is on.
+C
+C     ENABLED for Cycle 9 (Two-way density coupling)
+#define ALLOW_SEDIMENT_DENSITY
+
+C     ===================================================================
+C     CYCLE 10: SHELFICE COUPLING
+C     ===================================================================
+
+C     ALLOW_SEDIMENT_SHELFICE
+C     =======================
+C     Enable sediment interaction with ice shelf melt/freeze.
+C     Sediment in the boundary layer affects heat transfer coefficients.
+C
+C     Physics:
+C       - Sediment increases turbulence → higher γT, γS
+C       - Modified transfer: γT_eff = γT * (1 + αsed * C_BL)
+C       - Subglacial discharge injects sediment at grounding line
+C       - Sediment can deposit on ice face (reduces melt)
+C
+C     Effects:
+C       1. THERMAL: Sediment-laden water has different heat capacity
+C       2. TURBULENT: Sediment increases roughness → more mixing
+C       3. SOURCE: Subglacial discharge adds sediment at ice base
+C       4. DEPOSITION: Heavy particles settle onto ice face
+C
+C     Requires: ALLOW_SHELFICE in packages.conf
+C
+C     ENABLED for Cycle 10 (Sediment-ice interaction)
+#define ALLOW_SEDIMENT_SHELFICE
+
+C     ===================================================================
+C     CYCLE 10 SUB-OPTIONS
+C     ===================================================================
+
+C     ALLOW_SEDIMENT_SUBGLACIAL_DISCHARGE
+C     ===================================
+C     Enable sediment source from subglacial discharge.
+C     Injects freshwater + sediment at specified grounding line cells.
+C     Requires: ALLOW_SEDIMENT_SHELFICE
+C
+#define ALLOW_SEDIMENT_SUBGLACIAL_DISCHARGE
+
+C     ALLOW_SEDIMENT_MELT_FEEDBACK
+C     ============================
+C     Enable sediment feedback on melt rate.
+C     High sediment concentration in BL modifies heat transfer.
+C     γT_eff = γT * (1 + SEDIMENT_meltFactor * C_BL)
+C     Requires: ALLOW_SEDIMENT_SHELFICE
+C
+#define ALLOW_SEDIMENT_MELT_FEEDBACK
 
 #endif /* SEDIMENT_OPTIONS_H */
 

@@ -54,6 +54,12 @@ C   this implies that grid-cell thickness (hFactors) varies with time
 C o Include/exclude nonHydrostatic code
 #define ALLOW_NONHYDROSTATIC
 
+C o Include shelf-ice package support
+#define ALLOW_SHELFICE
+
+C o Include open boundary conditions
+#define ALLOW_OBCS
+
 C-- Algorithm options:
 
 C o Include/exclude code for single reduction Conjugate-Gradient solver

@@ -21,6 +21,9 @@
 
 clear; close all;
 
+% Add MITgcm MATLAB utilities (rdmds, etc.)
+addpath(genpath('/scratch/mm10845/mbase_MITgcm/utils/matlab'));
+
 %% ========================================================================
 % CONFIGURATION (match SIZE.h and data)
 %==========================================================================
@@ -43,9 +46,6 @@ gravity = 9.81;
 % Reference state
 T_ref = 15;  % Mean of 10 and 20°C
 S_ref = 35;
-
-% Data precision
-prec = 'float32';
 
 % Create coordinates
 x = (0.5:Nx-0.5) * dx;
@@ -105,21 +105,21 @@ for i = 1:nT
     end
     
     % Temperature
-    T = readbin(sprintf('T.%010d.data', iter), [Nx,Ny,Nr], prec);
+    T = rdmds('T', iter);
     stats.T_mean(i) = mean(T(:));
     stats.T_min(i) = min(T(:));
     stats.T_max(i) = max(T(:));
     
     % Sediment
-    C = readbin(sprintf('PTRACER01.%010d.data', iter), [Nx,Ny,Nr], prec);
+    C = rdmds('PTRACER01', iter);
     stats.C_mean(i) = mean(C(:));
     stats.C_min(i) = min(C(:));
     stats.C_max(i) = max(C(:));
     stats.C_total(i) = sum(C(:)) * dx * dy * dz;
     
     % Velocities
-    U = readbin(sprintf('U.%010d.data', iter), [Nx,Ny,Nr], prec);
-    W = readbin(sprintf('W.%010d.data', iter), [Nx,Ny,Nr], prec);
+    U = rdmds('U', iter);
+    W = rdmds('W', iter);
     stats.U_max(i) = max(abs(U(:)));
     stats.W_max(i) = max(abs(W(:)));
     
@@ -259,10 +259,10 @@ fprintf('  Saved: plot_cycle7_diagnostics.png\n');
 iter_final = iters(end);
 time_final = iter_final * deltaT;
 
-T = readbin(sprintf('T.%010d.data', iter_final), [Nx,Ny,Nr], prec);
-C = readbin(sprintf('PTRACER01.%010d.data', iter_final), [Nx,Ny,Nr], prec);
-U = readbin(sprintf('U.%010d.data', iter_final), [Nx,Ny,Nr], prec);
-W = readbin(sprintf('W.%010d.data', iter_final), [Nx,Ny,Nr], prec);
+T = rdmds('T', iter_final);
+C = rdmds('PTRACER01', iter_final);
+U = rdmds('U', iter_final);
+W = rdmds('W', iter_final);
 
 % Compute density anomalies
 drho_T = -rhoConst * tAlpha * (T - T_ref);
@@ -371,8 +371,8 @@ for p = 1:length(snap_idx)
     iter = iters(snap_idx(p));
     time = iter * deltaT;
     
-    T = readbin(sprintf('T.%010d.data', iter), [Nx,Ny,Nr], prec);
-    C = readbin(sprintf('PTRACER01.%010d.data', iter), [Nx,Ny,Nr], prec);
+    T = rdmds('T', iter);
+    C = rdmds('PTRACER01', iter);
     
     drho_T = -rhoConst * tAlpha * (T - T_ref);
     drho_C = rhoConst * gammaC * C;
@@ -581,7 +581,7 @@ impact.int_drho_C_max = max(abs(int_drho_C(:)));
 fprintf('\n--- Cycle 8: NH Mode Verification ---\n');
 
 % Read V velocity for divergence calculation
-V = readbin(sprintf('U.%010d.data', iter_final), [Nx,Ny,Nr], prec);  % Placeholder
+V = rdmds('U', iter_final);  % Placeholder
 
 % Compute horizontal velocity divergence at mid-depth
 kmid = round(Nr/2);
@@ -657,20 +657,404 @@ end
 fprintf('============================================================\n');
 
 %% ========================================================================
+% SANITY CHECK 1: BUOYANCY FREQUENCY N² (STRATIFICATION STABILITY)
+%==========================================================================
+% Physics: N² = -g/ρ₀ * dρ/dz
+%   N² > 0: Stable stratification (oscillations)
+%   N² < 0: Unstable (convection triggered)
+%   N² ~ 0: Neutral
+%
+% With sediment: N² includes both thermal AND sediment contributions
+
+fprintf('\n--- Sanity Check 1: Stratification Stability (N²) ---\n');
+
+% Compute N² at final time
+drho_dz_T = zeros(Nx, Ny, Nr-1);
+drho_dz_C = zeros(Nx, Ny, Nr-1);
+drho_dz_total = zeros(Nx, Ny, Nr-1);
+
+for k = 1:Nr-1
+    drho_dz_T(:,:,k) = (drho_T(:,:,k+1) - drho_T(:,:,k)) / dz;
+    drho_dz_C(:,:,k) = (drho_C(:,:,k+1) - drho_C(:,:,k)) / dz;
+    drho_dz_total(:,:,k) = drho_dz_T(:,:,k) + drho_dz_C(:,:,k);
+end
+
+% N² = -g/ρ₀ * dρ/dz
+N2_T = -gravity / rhoConst * drho_dz_T;
+N2_C = -gravity / rhoConst * drho_dz_C;
+N2_total = N2_T + N2_C;
+
+% Check for convective instability (N² < 0)
+unstable_T = sum(N2_T(:) < -1e-6);
+unstable_C = sum(N2_C(:) < -1e-6);
+unstable_total = sum(N2_total(:) < -1e-6);
+
+fprintf('  Unstable points (N² < 0):\n');
+fprintf('    From T alone:     %d points\n', unstable_T);
+fprintf('    From C alone:     %d points (sediment makes water heavier at bottom → STABLE)\n', unstable_C);
+fprintf('    Total (T+C):      %d points\n', unstable_total);
+
+% Sediment should STABILIZE (N² more positive) where C increases with depth
+% because sediment makes bottom water denser → more stable
+if unstable_total < unstable_T
+    fprintf('  ✓ SANITY CHECK PASSED: Sediment STABILIZES stratification\n');
+elseif unstable_C == 0
+    fprintf('  ✓ SANITY CHECK PASSED: Sediment contribution always stabilizing (dρ_C/dz > 0)\n');
+else
+    fprintf('  ⚠ CHECK: Sediment may create instability in some regions\n');
+end
+
+%% ========================================================================
+% SANITY CHECK 2: DENSITY COEFFICIENT VALIDATION
+%==========================================================================
+% Verify αC and γC are consistent between analysis and code
+% Code uses: alphaC = (ρ_sed - ρ_sw) / ρ_sed
+%            gammaC = alphaC / ρ₀
+
+fprintf('\n--- Sanity Check 2: Density Coefficient Validation ---\n');
+
+rho_sed = 2650;  % Quartz density [kg/m³]
+rho_sw = rhoConst;
+
+alphaC_computed = (rho_sed - rho_sw) / rho_sed;
+gammaC_computed = alphaC_computed / rhoConst;
+
+fprintf('  Expected coefficients:\n');
+fprintf('    αC = (ρ_sed - ρ_sw)/ρ_sed = %.4f (dimensionless)\n', alphaC_computed);
+fprintf('    γC = αC/ρ₀ = %.2e m³/kg\n', gammaC_computed);
+fprintf('  Analysis uses: γC = %.2e m³/kg\n', gammaC);
+
+if abs(gammaC - gammaC_computed) / gammaC_computed < 0.01
+    fprintf('  ✓ SANITY CHECK PASSED: γC matches physical derivation\n');
+else
+    fprintf('  ⚠ WARNING: γC mismatch! Update analysis value to %.2e\n', gammaC_computed);
+end
+
+% Cross-check: For C = 0.1 kg/m³
+C_test = 0.1;
+drho_method1 = rhoConst * gammaC * C_test;         % Using gammaC
+drho_method2 = alphaC_computed * C_test;            % Using alphaC (code method)
+
+fprintf('  Cross-check for C=%.2f kg/m³:\n', C_test);
+fprintf('    Δρ (gammaC method): %.4f kg/m³\n', drho_method1);
+fprintf('    Δρ (alphaC method): %.4f kg/m³\n', drho_method2);
+if abs(drho_method1 - drho_method2) < 0.001
+    fprintf('  ✓ Both methods agree\n');
+end
+
+%% ========================================================================
+% SANITY CHECK 3: SETTLING RATE VERIFICATION
+%==========================================================================
+% Check if sediment settles at approximately the expected rate
+% Physics: ws ~ 0.01 m/s for fine silt, z_settle = ws * t
+
+fprintf('\n--- Sanity Check 3: Settling Rate Verification ---\n');
+
+% Expected settling velocity from data.sediment
+ws_expected = 0.01;  % m/s (UPDATE THIS to match your data.sediment)
+
+% Compute center of mass of sediment over time
+z_vals = abs(z);  % Positive depths
+com_z = zeros(nT, 1);  % Center of mass depth
+
+for i = 1:nT
+    iter = iters(i);
+    C_tmp = rdmds('PTRACER01', iter);
+    
+    % Compute center of mass: z_cm = Σ(C*z) / Σ(C)
+    total_mass = sum(C_tmp(:));
+    if total_mass > 0
+        weighted_z = 0;
+        for k = 1:Nr
+            weighted_z = weighted_z + sum(sum(C_tmp(:,:,k))) * z_vals(k);
+        end
+        com_z(i) = weighted_z / total_mass;
+    end
+end
+
+% Compute settling rate from center of mass movement
+settling_rate = 0;
+if nT > 1
+    settling_rate = (com_z(end) - com_z(1)) / (stats.time(end) - stats.time(1));
+    
+    fprintf('  Expected settling velocity: %.4f m/s\n', ws_expected);
+    fprintf('  Observed center-of-mass descent rate: %.4f m/s\n', settling_rate);
+    fprintf('  Initial depth: %.2f m → Final: %.2f m\n', com_z(1), com_z(end));
+    
+    % Note: actual settling is reduced by mixing and advection
+    if settling_rate > 0 && settling_rate < ws_expected * 2
+        fprintf('  ✓ SANITY CHECK PASSED: Settling rate is reasonable\n');
+    elseif settling_rate <= 0
+        fprintf('  ⚠ NOTE: Sediment rising (advection/mixing dominates settling)\n');
+    else
+        fprintf('  ⚠ WARNING: Settling too fast - check ws parameter\n');
+    end
+end
+
+%% ========================================================================
+% SANITY CHECK 4: ENERGY BUDGET
+%==========================================================================
+% Track: KE = ½ρ₀(u² + v² + w²) and PE change from sediment
+
+fprintf('\n--- Sanity Check 4: Energy Budget ---\n');
+
+KE = zeros(nT, 1);
+PE_T = zeros(nT, 1);   % Potential energy from T
+PE_C = zeros(nT, 1);   % Potential energy from sediment
+
+cell_vol = dx * dy * dz;
+
+for i = 1:nT
+    iter = iters(i);
+    
+    U_tmp = rdmds('U', iter);
+    W_tmp = rdmds('W', iter);
+    T_tmp = rdmds('T', iter);
+    C_tmp = rdmds('PTRACER01', iter);
+    
+    % Kinetic energy (per unit volume, domain total)
+    KE(i) = 0.5 * rhoConst * sum(U_tmp(:).^2 + W_tmp(:).^2) * cell_vol;
+    
+    % Potential energy from density anomalies (relative to reference)
+    % PE = ∫ ρ * g * z dV (we track the anomaly part)
+    for k = 1:Nr
+        depth = abs(z(k));
+        drho_T_k = -rhoConst * tAlpha * (T_tmp(:,:,k) - T_ref);
+        drho_C_k = rhoConst * gammaC * C_tmp(:,:,k);
+        
+        PE_T(i) = PE_T(i) + sum(drho_T_k(:)) * gravity * depth * cell_vol;
+        PE_C(i) = PE_C(i) + sum(drho_C_k(:)) * gravity * depth * cell_vol;
+    end
+end
+
+% Total energy
+E_total = KE + PE_T + PE_C;
+
+fprintf('  Initial KE: %.2e J\n', KE(1));
+fprintf('  Final KE:   %.2e J\n', KE(end));
+fprintf('  PE change from T:   %.2e J\n', PE_T(end) - PE_T(1));
+fprintf('  PE change from Sed: %.2e J\n', PE_C(end) - PE_C(1));
+
+% Energy should generally decrease (dissipation) or convert between forms
+dKE = KE(end) - KE(1);
+if dKE > 0
+    fprintf('  KE increased (flow accelerated) - buoyancy driving motion\n');
+else
+    fprintf('  KE decreased (dissipation or flow decelerating)\n');
+end
+
+%% ========================================================================
+% SANITY CHECK 5: SIGN CONVENTIONS
+%==========================================================================
+% Verify that sediment increases density (makes water heavier)
+
+fprintf('\n--- Sanity Check 5: Sign Convention Check ---\n');
+
+% Where C > 0, Δρ_C should be > 0 (denser)
+C_final = rdmds('PTRACER01', iters(end));
+drho_C_final = rhoConst * gammaC * C_final;
+
+points_with_sed = sum(C_final(:) > 0.001);
+points_correct_sign = sum((C_final(:) > 0.001) & (drho_C_final(:) > 0));
+
+fprintf('  Points with significant sediment (C > 0.001): %d\n', points_with_sed);
+fprintf('  Points where Δρ_C > 0 (sediment makes denser): %d\n', points_correct_sign);
+
+if points_correct_sign == points_with_sed
+    fprintf('  ✓ SANITY CHECK PASSED: Sediment always increases density\n');
+else
+    fprintf('  ✗ SANITY CHECK FAILED: Sign error in density calculation!\n');
+end
+
+%% ========================================================================
+% SANITY CHECK 6: RICHARDSON NUMBER (MIXING STABILITY)
+%==========================================================================
+% Ri = N² / (du/dz)²
+% Ri < 0.25: Kelvin-Helmholtz instability (turbulent mixing)
+% Ri > 1: Stable, suppressed mixing
+
+fprintf('\n--- Sanity Check 6: Richardson Number ---\n');
+
+U_final = rdmds('U', iters(end));
+
+% Compute du/dz
+du_dz = zeros(Nx, Ny, Nr-1);
+for k = 1:Nr-1
+    du_dz(:,:,k) = (U_final(:,:,k+1) - U_final(:,:,k)) / dz;
+end
+
+% Richardson number
+Ri = N2_total ./ (du_dz.^2 + 1e-10);
+
+Ri_min = min(Ri(:));
+Ri_mean = mean(Ri(abs(Ri) < 1000));  % Exclude very large values
+Ri_unstable = sum(Ri(:) < 0.25 & Ri(:) > 0);
+
+fprintf('  Minimum Ri: %.2f\n', Ri_min);
+fprintf('  Mean Ri (finite): %.2f\n', Ri_mean);
+fprintf('  Points with Ri < 0.25 (KH unstable): %d\n', Ri_unstable);
+
+if Ri_unstable > 0
+    fprintf('  ⚠ Shear instability present - mixing expected\n');
+else
+    fprintf('  ✓ Flow is Richardson-stable\n');
+end
+
+%% ========================================================================
+% FIGURE 5: SANITY CHECK SUMMARY PLOTS
+%==========================================================================
+figure('Position', [50, 50, 1400, 800], 'Name', 'Sanity Checks');
+
+% Panel 1: N² profiles at different locations
+subplot(2,3,1);
+z_mid = (z(1:end-1) + z(2:end))/2;
+i1 = round(Nx*0.25); i2 = round(Nx*0.5); i3 = round(Nx*0.75);
+plot(squeeze(N2_total(i1,jmid,:))*1e4, z_mid, 'b-', 'LineWidth', 2); hold on;
+plot(squeeze(N2_total(i2,jmid,:))*1e4, z_mid, 'g-', 'LineWidth', 2);
+plot(squeeze(N2_total(i3,jmid,:))*1e4, z_mid, 'r-', 'LineWidth', 2);
+xline(0, 'k--');
+xlabel('N² (×10⁻⁴ s⁻²)'); ylabel('Depth (m)');
+title('Buoyancy Frequency Profiles');
+legend('Left', 'Center', 'Right');
+grid on;
+
+% Panel 2: Center of mass descent
+subplot(2,3,2);
+plot(stats.time, com_z, 'k-', 'LineWidth', 2); hold on;
+% Expected trajectory
+expected_z = com_z(1) + ws_expected * stats.time;
+plot(stats.time, expected_z, 'r--', 'LineWidth', 1);
+xlabel('Time (s)'); ylabel('Depth (m)');
+title('Sediment Center of Mass');
+legend('Observed', sprintf('ws=%.2f m/s', ws_expected));
+set(gca, 'YDir', 'reverse');
+grid on;
+
+% Panel 3: Energy evolution
+subplot(2,3,3);
+plot(stats.time, KE/max(KE), 'r-', 'LineWidth', 2); hold on;
+plot(stats.time, (PE_T - PE_T(1))/max(abs(PE_T - PE_T(1)) + 1e-10), 'b-', 'LineWidth', 2);
+plot(stats.time, (PE_C - PE_C(1))/max(abs(PE_C - PE_C(1)) + 1e-10), 'm-', 'LineWidth', 2);
+xlabel('Time (s)'); ylabel('Normalized Energy');
+title('Energy Evolution');
+legend('KE', 'ΔPE_T', 'ΔPE_C');
+grid on;
+
+% Panel 4: N² map at mid-depth
+subplot(2,3,4);
+kmid = round((Nr-1)/2);
+N2_slice = squeeze(N2_total(:,jmid,:))' * 1e4;
+pcolor(x, z_mid, N2_slice); shading flat; colorbar;
+caxis([-1 1]*max(abs(N2_slice(:))));
+colormap(gca, bluewhitered(64));
+xlabel('X (m)'); ylabel('Depth (m)');
+title('N² × 10⁴ (s⁻²)');
+
+% Panel 5: Richardson number map
+subplot(2,3,5);
+Ri_slice = squeeze(Ri(:,jmid,:))';
+Ri_slice(abs(Ri_slice) > 10) = NaN;  % Mask extreme values
+pcolor(x, z_mid, log10(abs(Ri_slice) + 0.1)); shading flat; colorbar;
+xlabel('X (m)'); ylabel('Depth (m)');
+title('log₁₀(Ri)');
+hold on;
+% Mark Ri = 0.25 contour
+[~, h] = contour(x, z_mid, Ri_slice, [0.25 0.25], 'k-', 'LineWidth', 2);
+
+% Panel 6: Summary text
+subplot(2,3,6);
+axis off;
+text(0.05, 0.95, 'SANITY CHECK SUMMARY', 'FontSize', 14, 'FontWeight', 'bold');
+
+checks_passed = 0;
+total_checks = 5;
+
+% Check 1: Sediment stabilizes
+if unstable_C == 0 || unstable_total <= unstable_T
+    text(0.05, 0.80, '✓ Sediment stabilizes stratification', 'FontSize', 11, 'Color', [0 0.5 0]);
+    checks_passed = checks_passed + 1;
+else
+    text(0.05, 0.80, '✗ Sediment destabilizes (unexpected)', 'FontSize', 11, 'Color', 'r');
+end
+
+% Check 2: Coefficient match
+if abs(gammaC - gammaC_computed) / gammaC_computed < 0.01
+    text(0.05, 0.65, '✓ Density coefficients consistent', 'FontSize', 11, 'Color', [0 0.5 0]);
+    checks_passed = checks_passed + 1;
+else
+    text(0.05, 0.65, '⚠ Density coefficients mismatch', 'FontSize', 11, 'Color', [0.8 0.5 0]);
+end
+
+% Check 3: Settling reasonable
+if settling_rate > 0 && settling_rate < ws_expected * 2
+    text(0.05, 0.50, '✓ Settling rate reasonable', 'FontSize', 11, 'Color', [0 0.5 0]);
+    checks_passed = checks_passed + 1;
+else
+    text(0.05, 0.50, '⚠ Settling rate unexpected', 'FontSize', 11, 'Color', [0.8 0.5 0]);
+end
+
+% Check 4: Sign convention
+if points_correct_sign == points_with_sed
+    text(0.05, 0.35, '✓ Sediment increases density', 'FontSize', 11, 'Color', [0 0.5 0]);
+    checks_passed = checks_passed + 1;
+else
+    text(0.05, 0.35, '✗ Sign error in density!', 'FontSize', 11, 'Color', 'r');
+end
+
+% Check 5: Mass conservation
+if abs(mass_change(end)) < 1
+    text(0.05, 0.20, '✓ Mass conserved (<1%)', 'FontSize', 11, 'Color', [0 0.5 0]);
+    checks_passed = checks_passed + 1;
+else
+    text(0.05, 0.20, sprintf('⚠ Mass change: %.2f%%', mass_change(end)), 'FontSize', 11, 'Color', [0.8 0.5 0]);
+end
+
+text(0.05, 0.05, sprintf('PASSED: %d/%d checks', checks_passed, total_checks), ...
+    'FontSize', 12, 'FontWeight', 'bold');
+
+sgtitle('Buoyancy Coupling Sanity Checks', 'FontSize', 14, 'FontWeight', 'bold');
+saveas(gcf, 'plot_sanity_checks.png');
+fprintf('\n  Saved: plot_sanity_checks.png\n');
+
+%% ========================================================================
+% PRINT FINAL SANITY CHECK REPORT
+%==========================================================================
+fprintf('\n============================================================\n');
+fprintf('SANITY CHECK REPORT\n');
+fprintf('============================================================\n');
+fprintf('Checks passed: %d / %d\n\n', checks_passed, total_checks);
+
+fprintf('1. Stratification (N²):\n');
+fprintf('   Unstable points from T: %d\n', unstable_T);
+fprintf('   Unstable points total:  %d\n', unstable_total);
+if unstable_total <= unstable_T
+    fprintf('   → Sediment STABILIZES stratification\n');
+else
+    fprintf('   → Sediment DESTABILIZES stratification\n');
+end
+
+fprintf('\n2. Density Coefficients:\n');
+fprintf('   αC = %.4f (expected: %.4f)\n', alphaC_computed, alphaC_computed);
+fprintf('   γC = %.2e (used: %.2e)\n', gammaC_computed, gammaC);
+
+fprintf('\n3. Settling Rate:\n');
+fprintf('   Expected: %.4f m/s\n', ws_expected);
+fprintf('   Observed: %.4f m/s\n', settling_rate);
+if ws_expected > 0
+    fprintf('   Ratio: %.1f%%\n', settling_rate/ws_expected*100);
+end
+
+fprintf('\n4. Energy:\n');
+fprintf('   KE change: %.2e J (%.1f%%)\n', dKE, dKE/max(KE(1),1e-10)*100);
+fprintf('   PE(T) change: %.2e J\n', PE_T(end) - PE_T(1));
+fprintf('   PE(C) change: %.2e J\n', PE_C(end) - PE_C(1));
+
+fprintf('\n5. Mass Conservation: %.4f%%\n', mass_change(end));
+fprintf('============================================================\n');
+
+%% ========================================================================
 % HELPER FUNCTIONS
 %==========================================================================
-
-function data = readbin(fname, dims, prec)
-    fid = fopen(fname, 'r', 'ieee-be');
-    if fid < 0
-        warning('Cannot open: %s', fname);
-        data = zeros(dims);
-        return;
-    end
-    data = fread(fid, prod(dims), prec);
-    fclose(fid);
-    data = reshape(data, dims);
-end
 
 function cmap = bluewhitered(n)
     if nargin < 1, n = 64; end

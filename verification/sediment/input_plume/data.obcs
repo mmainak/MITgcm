@@ -1,0 +1,91 @@
+# ====================
+# | OBCS - Open Boundary Conditions for Subglacial Plume |
+# ====================
+#
+# 4-PROCESSOR PARALLEL: Nx=40, Ny=8, Nr=40
+# (sNx=20, sNy=4, nPx=2, nPy=2)
+#
+# HOW CONSTANT FORCING WORKS:
+# ---------------------------
+# 1. OBCS reads 2D fields (Ny x Nr) = (8 x 40) at startup
+# 2. These values are applied at boundary ghost cells EVERY timestep
+# 3. For INFLOW (west boundary, conduit):
+#    - OBWu > 0 means flow INTO domain (u positive = eastward)
+#    - OBWt, OBWs set temperature and salinity of inflowing water
+#    - OBWptrFile sets sediment concentration via PTRACERS
+# 4. For OUTFLOW (east boundary):
+#    - Sponge layer relaxes fields toward ambient values
+#
+# BOUNDARY LAYOUT:
+# - WEST (i=1): Conduit at seafloor (k=39-40, j=3-6)
+#   * Conduit cells: Prescribed inflow (u=0.5m/s, T=0C, S=0, sed=1kg/m3)
+#   * Other cells: No flow
+# - EAST (i=40): Open boundary with sponge
+# - NORTH/SOUTH: Solid walls (not OBCS)
+#
+ &OBCS_PARM01
+#
+# Enable prescribed boundaries
+ useOBCSprescribe = .TRUE.,
+#
+# Mass balance (disabled - we want net inflow)
+ useOBCSbalance = .FALSE.,
+#
+# ========== BOUNDARY INDICES ==========
+# West boundary: i=1 for all j (Ny=8)
+ OB_Iwest = 8*1,
+#
+# East boundary: i=Nx=40 for all j
+ OB_Ieast = 8*40,
+#
+# ========== BOUNDARY FILES ==========
+# 2D arrays of size (Ny=8, Nr=40)
+#
+# West boundary (ice face + conduit)
+ OBWuFile = 'OBWu.bin',
+ OBWvFile = 'OBWv.bin',
+ OBWtFile = 'OBWt.bin',
+ OBWsFile = 'OBWs.bin',
+#
+# East boundary (open, sponge to ambient)
+# Velocity: Use Orlanski radiation BC (don't prescribe)
+# OBEuFile = 'OBEu.bin',
+# OBEvFile = 'OBEv.bin',
+# Temperature/Salinity: Prescribe ambient values
+ OBEtFile = 'OBEt.bin',
+ OBEsFile = 'OBEs.bin',
+#
+# ========== TRACER BOUNDARY FILES ==========
+# Passive tracer (sediment) boundary conditions
+# NOTE: Parameter name is OBWptrFile (not OBWtrFile!)
+#
+# WEST: Prescribed inflow at conduit (C=1.0 kg/m3)
+ OBWptrFile(1) = 'OBWsed.bin',
+#
+# EAST: NO prescription - zero-gradient BC applied in sediment code
+# (Commenting out OBEptrFile allows sediment to exit freely)
+# OBEptrFile(1) = 'OBEsed.bin',
+#
+# ========== SPONGE LAYER ==========
+ useOBCSsponge = .TRUE.,
+#
+ &
+
+# ========== SPONGE RELAXATION PARAMETERS ==========
+# Only read if ALLOW_OBCS_SPONGE is defined
+ &OBCS_PARM03
+#
+# Sponge thickness (number of cells from boundary)
+ spongeThickness = 5,
+#
+# Relaxation timescales [seconds]
+# - obcsbound: at boundary (fast, 100s ~ 2 min)
+# - obcsinner: at inner edge of sponge (slow, 10 days)
+#
+# Velocity sponge only (MITgcm OBCS doesn't have T/S sponge params)
+ Urelaxobcsbound = 100.,
+ Urelaxobcsinner = 864000.,
+ Vrelaxobcsbound = 100.,
+ Vrelaxobcsinner = 864000.,
+#
+ &

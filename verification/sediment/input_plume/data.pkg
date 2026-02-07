@@ -1,0 +1,11 @@
+# Packages for Subglacial Plume Simulation
+# NOTE: SHELFICE disabled for initial plume test
+# With grounded ice, SHELFICE blocks west boundary cells,
+# conflicting with OBCS conduit injection.
+# Re-enable after verifying plume dynamics work.
+ &PACKAGES
+ usePTRACERS = .TRUE.,
+ useOBCS = .TRUE.,
+ useSHELFICE = .FALSE.,
+ useDIAGNOSTICS = .TRUE.,
+ &

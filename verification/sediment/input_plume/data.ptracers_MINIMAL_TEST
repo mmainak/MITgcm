@@ -1,0 +1,35 @@
+# ====================
+# | PTRACERS - MINIMAL TEST (No Settling, Simple Advection) |
+# ====================
+#
+# This is a diagnostic configuration to isolate the NaN source
+# - No settling
+# - Simple 2nd-order advection (most stable)
+# - High diffusivity to damp any oscillations
+#
+ &PTRACERS_PARM01
+#
+# Number of tracers
+ PTRACERS_numInUse = 1,
+ PTRACERS_Iter0 = 0,
+#
+# --- Tracer 1: Sediment ---
+ PTRACERS_names(1) = 'sediment',
+ PTRACERS_long_names(1) = 'Sediment Concentration',
+ PTRACERS_units(1) = 'kg/m^3',
+#
+# Advection scheme: 2 = 2nd order centered (most stable, no limiter needed)
+ PTRACERS_advScheme(1) = 2,
+#
+# HIGH diffusivity to ensure stability
+ PTRACERS_diffKh(1) = 1.0,
+ PTRACERS_diffKr(1) = 0.1,
+#
+# No GM/Redi, no KPP
+ PTRACERS_useGMRedi(1) = .FALSE.,
+ PTRACERS_useKPP(1) = .FALSE.,
+#
+# Initial condition: use simple uniform test field
+ PTRACERS_initialFile(1) = 'sediment_init_test.bin',
+#
+ &

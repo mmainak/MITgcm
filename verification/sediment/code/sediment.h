@@ -97,4 +97,78 @@ C     .FALSE. = sediment is passive (no density effect)
       LOGICAL SEDIMENT_buoyancyOn
       COMMON /SEDIMENT_BUOYANCY_FLAGS/ SEDIMENT_buoyancyOn
 
+C     ===================================================================
+C     CYCLE 9: TWO-WAY DENSITY COUPLING CONTROL
+C     ===================================================================
+
+C     Flag to enable/disable density coupling in stability calculations
+C     Read from data.sediment namelist
+C     .TRUE. = sediment affects density in convection/mixing (two-way)
+C     .FALSE. = only buoyancy coupling (one-way, Cycle 7)
+C
+C     When enabled, convective adjustment and mixing schemes will
+C     "feel" sediment-induced stratification.
+      LOGICAL SEDIMENT_densityOn
+      COMMON /SEDIMENT_DENSITY_FLAGS/ SEDIMENT_densityOn
+
+C     ===================================================================
+C     CYCLE 10: SHELFICE COUPLING PARAMETERS
+C     ===================================================================
+C
+C     These parameters control sediment-ice interaction for subglacial
+C     plume simulations.
+
+#ifdef ALLOW_SEDIMENT_SHELFICE
+
+C     Flag to enable sediment-SHELFICE coupling
+C     .TRUE. = sediment affects melt rate via transfer coefficient
+      LOGICAL SEDIMENT_shelficeOn
+      COMMON /SEDIMENT_SHELFICE_FLAGS/ SEDIMENT_shelficeOn
+
+C     Sediment feedback on heat transfer coefficient [dimensionless]
+C     γT_eff = γT * (1 + SEDIMENT_meltFactor * C_BL)
+C     Typical value: 0.1-1.0 (empirical, higher = more melt with sediment)
+      _RL SEDIMENT_meltFactor
+      COMMON /SEDIMENT_SHELFICE_RL/ SEDIMENT_meltFactor
+
+#ifdef ALLOW_SEDIMENT_SUBGLACIAL_DISCHARGE
+C     ===================================================================
+C     SUBGLACIAL DISCHARGE PARAMETERS
+C     ===================================================================
+
+C     Subglacial discharge rate [m³/s per cell]
+C     Typical: 1-100 m³/s for a single outlet
+      _RL SEDIMENT_sgdFlux
+
+C     Sediment concentration in subglacial discharge [kg/m³]
+C     Typical: 0.1-10 kg/m³ (highly variable)
+      _RL SEDIMENT_sgdConc
+
+C     Temperature of subglacial discharge [°C]
+C     Typically at or near pressure melting point (~0°C)
+      _RL SEDIMENT_sgdTemp
+
+C     Salinity of subglacial discharge [psu]
+C     Typically freshwater (0) or glacial meltwater (~0)
+      _RL SEDIMENT_sgdSalt
+
+C     Vertical extent of subglacial discharge [m]
+C     How thick is the injection layer
+      _RL SEDIMENT_sgdDepth
+
+C     Location indices for subglacial discharge source
+C     Can be a single cell or multiple cells (comma-separated in namelist)
+C     Max 10 injection points
+      INTEGER SEDIMENT_sgdNpts
+      INTEGER SEDIMENT_sgdI(10), SEDIMENT_sgdJ(10)
+
+      COMMON /SEDIMENT_SGD_I/ SEDIMENT_sgdNpts,
+     &                        SEDIMENT_sgdI, SEDIMENT_sgdJ
+      COMMON /SEDIMENT_SGD_RL/ SEDIMENT_sgdFlux, SEDIMENT_sgdConc,
+     &        SEDIMENT_sgdTemp, SEDIMENT_sgdSalt, SEDIMENT_sgdDepth
+
+#endif /* ALLOW_SEDIMENT_SUBGLACIAL_DISCHARGE */
+
+#endif /* ALLOW_SEDIMENT_SHELFICE */
+
 #endif /* ALLOW_PTRACERS */
